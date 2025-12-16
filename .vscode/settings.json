@@ -1,0 +1,8 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "idf.pythonInstallPath": "/usr/local/bin/python3",
+    "java.dependency.packagePresentation": "hierarchical",
+    "java.project.sourcePaths": [],
+    "maven.view": "hierarchical",
+    "java.compile.nullAnalysis.mode": "automatic"
+}

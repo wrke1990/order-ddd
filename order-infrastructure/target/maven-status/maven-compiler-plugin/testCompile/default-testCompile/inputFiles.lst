@@ -1,0 +1,6 @@
+/Users/qudian_1/Documents/workSpace/ddd_demo/order-ddd/order-infrastructure/src/test/java/com/example/order/infrastructure/acl/payment/PaymentClientImplTest.java
+/Users/qudian_1/Documents/workSpace/ddd_demo/order-ddd/order-infrastructure/src/test/java/com/example/order/infrastructure/acl/fulfillment/FulfillmentClientImplTest.java
+/Users/qudian_1/Documents/workSpace/ddd_demo/order-ddd/order-infrastructure/src/test/java/com/example/order/infrastructure/acl/user/UserClientImplTest.java
+/Users/qudian_1/Documents/workSpace/ddd_demo/order-ddd/order-infrastructure/src/test/java/com/example/order/infrastructure/acl/product/ProductClientImplTest.java
+/Users/qudian_1/Documents/workSpace/ddd_demo/order-ddd/order-infrastructure/src/test/java/com/example/order/infrastructure/acl/promotion/PromotionClientImplTest.java
+/Users/qudian_1/Documents/workSpace/ddd_demo/order-ddd/order-infrastructure/src/test/java/com/example/order/infrastructure/repository/impl/OrderRepositoryImplTest.java

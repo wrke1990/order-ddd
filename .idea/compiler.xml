@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Annotation profile for order-server" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <option name="mapstruct.defaultComponentModel" value="spring" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/mapstruct/mapstruct-processor/1.5.5.Final/mapstruct-processor-1.5.5.Final.jar" />
+        </processorPath>
+        <module name="order-server" />
+      </profile>
+      <profile name="Annotation profile for order-ddd" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <option name="mapstruct.defaultComponentModel" value="spring" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/mapstruct/mapstruct-processor/1.5.5.Final/mapstruct-processor-1.5.5.Final.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/springframework/boot/spring-boot-configuration-processor/2.7.15/spring-boot-configuration-processor-2.7.15.jar" />
+        </processorPath>
+        <module name="order-common" />
+        <module name="order-domain" />
+        <module name="order-api" />
+        <module name="order-infrastructure" />
+        <module name="order-admin" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="order-admin" options="-parameters -Amapstruct.defaultComponentModel=spring -Xlint:unchecked -Xlint:deprecation" />
+      <module name="order-api" options="-parameters -Amapstruct.defaultComponentModel=spring -Xlint:unchecked -Xlint:deprecation" />
+      <module name="order-common" options="-parameters -Amapstruct.defaultComponentModel=spring -Xlint:unchecked -Xlint:deprecation" />
+      <module name="order-ddd" options="-parameters -Amapstruct.defaultComponentModel=spring -Xlint:unchecked -Xlint:deprecation" />
+      <module name="order-domain" options="-parameters -Amapstruct.defaultComponentModel=spring -Xlint:unchecked -Xlint:deprecation" />
+      <module name="order-infrastructure" options="-parameters -Amapstruct.defaultComponentModel=spring -Xlint:unchecked -Xlint:deprecation" />
+      <module name="order-server" options="-parameters -Amapstruct.defaultComponentModel=spring -Xlint:unchecked -Xlint:deprecation" />
+    </option>
+  </component>
+</project>
