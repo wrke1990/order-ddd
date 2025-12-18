@@ -16,7 +16,7 @@ public class ShoppingCartItem implements Serializable {
     private Long cartId;
     private Long userId;
     private final Long productId;
-    private final String productName;
+    private String productName;
     private String productImage;
     private Integer quantity;
     private Price price;
@@ -95,6 +95,21 @@ public class ShoppingCartItem implements Serializable {
         this.unavailableReason = unavailableReason;
         if (!newAvailable) {
             this.selected = false; // 下架商品自动取消选中
+        }
+    }
+
+    /**
+     * 更新商品基本信息（名称、图片、价格）
+     */
+    public void updateBasicInfo(String newProductName, String newProductImage, Long newPriceAmount) {
+        if (newProductName != null && !newProductName.isEmpty()) {
+            this.productName = newProductName;
+        }
+        if (newProductImage != null) {
+            this.productImage = newProductImage;
+        }
+        if (newPriceAmount != null && newPriceAmount > 0) {
+            this.price = new Price(newPriceAmount, this.price.getCurrency());
         }
     }
 

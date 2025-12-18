@@ -55,23 +55,16 @@ public class ProductValidationServiceImpl implements ProductValidationService {
             productMap.put(Id.of(product.getProductId()), product);
         }
 
-        // 检查库存
-        Map<Id, Integer> stockMap = productClient.getProductStocksByIds(productIds);
-        for (Map.Entry<Id, ProductDTO> entry : productMap.entrySet()) {
-            Id productId = entry.getKey();
-            ProductDTO product = entry.getValue();
-            int requestedQuantity = productQuantityMap.get(productId);
-            int availableStock = stockMap.getOrDefault(productId, 0);
-
-            if (availableStock < requestedQuantity) {
-                throw new BusinessException(
-                        String.format("商品库存不足，商品ID: %d，请求数量: %d，可用库存: %d",
-                                productId.getValue(), requestedQuantity, availableStock)
-                );
-            }
-
-            logger.info("商品库存检查通过，商品ID: {}, 请求数量: {}, 可用库存: {}",
-                    productId.getValue(), requestedQuantity, availableStock);
+        // 检查库存：尝试锁定库存，如果成功则表示库存充足，然后立即解锁
+        boolean lockSuccess = productClient.lockProductStocks(productQuantityMap);
+        if (lockSuccess) {
+            // 库存充足，立即解锁
+            productClient.unlockProductStock(productQuantityMap);
+            logger.info("所有商品库存检查通过");
+        } else {
+            // 库存不足
+            // 这里无法获取具体哪个商品库存不足，只能提示整体库存不足
+            throw new BusinessException("部分商品库存不足");
         }
 
         return productMap;
@@ -89,15 +82,19 @@ public class ProductValidationServiceImpl implements ProductValidationService {
             return false;
         }
 
-        // 检查库存是否大于0
-        Map<Id, Integer> stockMap = productClient.getProductStocksByIds(Arrays.asList(productId));
-        Integer stock = stockMap.getOrDefault(productId, 0);
-        boolean hasStock = stock > 0;
-        if (!hasStock) {
-            logger.info("商品库存不足，商品ID: {}, 库存: {}", productId, stock);
+        // 检查库存是否大于0：尝试锁定1个单位的库存
+        Map<Id, Integer> singleUnitMap = Collections.singletonMap(productId, 1);
+        boolean lockSuccess = productClient.lockProductStocks(singleUnitMap);
+        if (lockSuccess) {
+            // 库存充足，立即解锁
+            productClient.unlockProductStock(singleUnitMap);
+            logger.info("商品库存充足，商品ID: {}", productId);
+            return true;
+        } else {
+            // 库存不足
+            logger.info("商品库存不足，商品ID: {}", productId);
+            return false;
         }
-
-        return hasStock;
     }
 
     @Override

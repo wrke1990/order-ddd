@@ -290,18 +290,16 @@ public class OrderCommandServiceImpl implements OrderCommandService {
             // 取消订单
             orderDomainService.cancelOrder(orderId.toString());
 
-            // 解锁已锁定的商品库存
+            // 批量解锁已锁定的商品库存
+            Map<Id, Integer> productQuantityMap = new HashMap<>();
             for (OrderItem item : order.getOrderItems()) {
-                Id productId = item.getProductId();
-                Integer quantity = item.getQuantity();
-
-                boolean unlockSuccess = productClient.unlockProductStock(productId, quantity);
-                if (!unlockSuccess) {
-                    logger.error("解锁商品库存失败，商品ID: {}, 数量: {}", productId.getValue(), quantity);
-                    // 可以选择抛出异常或记录日志后继续
-                } else {
-                    logger.info("解锁商品库存成功，商品ID: {}, 数量: {}", productId.getValue(), quantity);
-                }
+                productQuantityMap.put(item.getProductId(), item.getQuantity());
+            }
+            boolean unlockSuccess = productClient.unlockProductStock(productQuantityMap);
+            if (!unlockSuccess) {
+                logger.error("批量解锁商品库存失败");
+            } else {
+                logger.info("批量解锁商品库存成功");
             }
 
             logger.info("订单取消成功，订单ID: {}", orderId);
@@ -428,19 +426,16 @@ public class OrderCommandServiceImpl implements OrderCommandService {
             // 完成订单
             orderDomainService.completeOrder(orderId.toString());
 
-            // 扣减商品库存
+            // 批量扣减商品库存
+            Map<Id, Integer> productQuantityMap = new HashMap<>();
             for (OrderItem item : order.getOrderItems()) {
-                Id productId = item.getProductId();
-                Integer quantity = item.getQuantity();
-
-                // 扣减商品库存
-                boolean deductSuccess = productClient.deductProductStock(productId, quantity);
-                if (!deductSuccess) {
-                    logger.error("扣减商品库存失败，商品ID: {}, 数量: {}", productId.getValue(), quantity);
-                    // 可以选择抛出异常或记录日志后继续
-                } else {
-                    logger.info("扣减商品库存成功，商品ID: {}, 数量: {}", productId.getValue(), quantity);
-                }
+                productQuantityMap.put(item.getProductId(), item.getQuantity());
+            }
+            boolean deductSuccess = productClient.deductProductStock(productQuantityMap);
+            if (!deductSuccess) {
+                logger.error("批量扣减商品库存失败");
+            } else {
+                logger.info("批量扣减商品库存成功");
             }
 
             logger.info("订单完成成功，订单ID: {}", orderId);

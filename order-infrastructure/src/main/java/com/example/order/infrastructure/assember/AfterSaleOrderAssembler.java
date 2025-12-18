@@ -1,11 +1,15 @@
 package com.example.order.infrastructure.assember;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
 import com.example.order.domain.model.aggregate.AfterSaleOrder;
+import com.example.order.domain.model.entity.AfterSaleItem;
 import com.example.order.domain.model.vo.AfterSaleStatus;
 import com.example.order.domain.model.vo.AfterSaleType;
-import com.example.order.domain.model.vo.Price;
 import com.example.order.infrastructure.persistence.po.AfterSaleOrderPO;
-import org.springframework.stereotype.Component;
 
 /**
  * 售后订单对象映射器
@@ -26,14 +30,8 @@ public class AfterSaleOrderAssembler {
         afterSaleOrderPO.setAfterSaleNo(afterSaleOrder.getAfterSaleNo());
         afterSaleOrderPO.setOrderNo(afterSaleOrder.getOrderNo());
         afterSaleOrderPO.setUserId(afterSaleOrder.getUserId());
-        afterSaleOrderPO.setProductId(afterSaleOrder.getProductId());
-        afterSaleOrderPO.setProductName(afterSaleOrder.getProductName());
-        afterSaleOrderPO.setProductImage(afterSaleOrder.getProductImage());
-        afterSaleOrderPO.setQuantity(afterSaleOrder.getQuantity());
         afterSaleOrderPO.setAfterSaleType(afterSaleOrder.getType().name());
         afterSaleOrderPO.setStatus(afterSaleOrder.getStatus().name());
-        afterSaleOrderPO.setRefundAmount(afterSaleOrder.getRefundAmount().getAmount());
-        afterSaleOrderPO.setCurrency(afterSaleOrder.getRefundAmount().getCurrency());
         afterSaleOrderPO.setReason(afterSaleOrder.getReason());
         afterSaleOrderPO.setDescription(afterSaleOrder.getDescription());
         afterSaleOrderPO.setCreateTime(afterSaleOrder.getCreateTime());
@@ -55,21 +53,21 @@ public class AfterSaleOrderAssembler {
             return null;
         }
 
+        // 创建空的售后商品项列表
+        List<AfterSaleItem> afterSaleItems = new ArrayList<>();
+
         // 使用工厂方法创建售后订单
         AfterSaleOrder afterSaleOrder = AfterSaleOrder.create(
                 afterSaleOrderPO.getAfterSaleNo(),
                 0L, // orderId, 使用默认值
                 afterSaleOrderPO.getOrderNo(),
                 afterSaleOrderPO.getUserId(),
-                afterSaleOrderPO.getProductId(),
-                afterSaleOrderPO.getProductName(),
-                afterSaleOrderPO.getProductImage(), // 添加productImage参数
-                afterSaleOrderPO.getQuantity(),
-                new Price(0L, afterSaleOrderPO.getCurrency()), // productPrice, 使用默认值
                 AfterSaleType.valueOf(afterSaleOrderPO.getAfterSaleType()),
                 afterSaleOrderPO.getReason(),
                 afterSaleOrderPO.getDescription(),
-                null // images, 使用默认值
+                null, // images, 使用默认值
+                afterSaleItems,
+                false // adminInitiated, 使用默认值
         );
 
         // 使用反射设置其他属性

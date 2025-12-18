@@ -1,5 +1,19 @@
 package com.example.order.server.application.service.impl;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import com.example.order.infrastructure.acl.product.dto.ProductDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.order.domain.model.aggregate.ShoppingCart;
 import com.example.order.domain.model.entity.ShoppingCartItem;
 import com.example.order.domain.model.vo.Id;
@@ -11,14 +25,6 @@ import com.example.order.server.application.dto.ShoppingCartCommand;
 import com.example.order.server.application.dto.ShoppingCartResponse;
 import com.example.order.server.application.service.ProductValidationService;
 import com.example.order.server.application.service.ShoppingCartCommandService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * 购物车命令服务实现
@@ -57,16 +63,27 @@ public class ShoppingCartCommandServiceImpl implements ShoppingCartCommandServic
         Id productId = Id.of(request.getItem().getProductId());
         int quantity = request.getItem().getQuantity();
         productValidationService.validateProductsAndStock(
-                java.util.Collections.singletonList(productId),
-                java.util.Collections.singletonMap(productId, quantity)
+                Collections.singletonList(productId),
+                Collections.singletonMap(productId, quantity)
         );
+
+        // 从商品服务获取最新商品信息
+        ProductDTO productDto = productClient.getProductsByIds(
+                Collections.singletonList(productId)
+        ).get(0);
+
+        // 更新请求中的商品信息为从商品服务获取的最新信息
+        ShoppingCartCommand.ItemCommand itemCommand = request.getItem();
+        itemCommand.setPrice(productDto.getPrice().longValue());
+        itemCommand.setProductName(productDto.getProductName());
+        itemCommand.setProductImage(productDto.getProductImage());
 
         // 获取或创建购物车
         ShoppingCart shoppingCart = shoppingCartRepository.findByUserId(request.getUserId())
                 .orElseGet(() -> ShoppingCart.create(request.getUserId()));
 
         // 添加商品到购物车
-        shoppingCart.addItem(shoppingCartDtoAssembler.toShoppingCartItem(request.getItem()));
+        shoppingCart.addItem(shoppingCartDtoAssembler.toShoppingCartItem(itemCommand));
 
         // 保存购物车
         shoppingCart = shoppingCartRepository.save(shoppingCart);
@@ -95,10 +112,19 @@ public class ShoppingCartCommandServiceImpl implements ShoppingCartCommandServic
                 .orElseThrow(() -> new RuntimeException("购物车中不存在该商品"));
         int totalQuantity = existingItem.getQuantity() + addQuantity;
 
-        // 验证库存
-        productValidationService.validateProductsAndStock(
+        // 验证库存并获取最新商品信息
+        Map<Id, ProductDTO> productMap = productValidationService.validateProductsAndStock(
                 java.util.Collections.singletonList(productId),
                 java.util.Collections.singletonMap(productId, totalQuantity)
+        );
+        ProductDTO productDto = productMap.get(productId);
+
+        // 更新购物车中的商品信息（包括价格）
+        shoppingCart.updateItemInfo(
+                request.getItem().getProductId(),
+                productDto.getProductName(),
+                productDto.getProductImage(),
+                productDto.getPrice().longValue()
         );
 
         // 增加商品数量
@@ -163,15 +189,18 @@ public class ShoppingCartCommandServiceImpl implements ShoppingCartCommandServic
                 .orElseThrow(() -> new RuntimeException("购物车不存在"));
 
         // 检查并删除不可用的商品
-        List<ShoppingCartItem> itemsToRemove = shoppingCart.getItems().stream()
-                .filter(item -> {
-                    // 检查商品是否存在且库存大于0
-                    Id productId = Id.of(item.getProductId());
-                    String productName = productClient.getProductNameById(productId);
-                    Integer stock = productClient.getProductStockById(productId);
-                    return productName == null || stock == null || stock <= 0;
-                })
-                .collect(java.util.stream.Collectors.toList());
+        List<ShoppingCartItem> itemsToRemove = new ArrayList<>();
+
+        for (ShoppingCartItem item : shoppingCart.getItems()) {
+            Id productId = Id.of(item.getProductId());
+
+            // 检查商品是否可用（存在且库存大于0）
+            boolean isAvailable = productValidationService.isProductAvailable(productId);
+
+            if (!isAvailable) {
+                itemsToRemove.add(item);
+            }
+        }
 
         // 删除不可用商品
         for (ShoppingCartItem item : itemsToRemove) {

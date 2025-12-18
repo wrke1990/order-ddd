@@ -1,7 +1,6 @@
 package com.example.order.infrastructure.acl.product;
 
 import com.example.order.domain.model.vo.Id;
-import com.example.order.domain.model.vo.Price;
 import com.example.order.infrastructure.acl.product.dto.ProductDTO;
 import com.example.order.infrastructure.acl.product.dto.StockDTO;
 import org.slf4j.Logger;
@@ -73,40 +72,6 @@ public class ProductClientImpl implements ProductClient {
     }
 
     @Override
-    public ProductDTO getProductById(Id productId) {
-        LOGGER.info("Getting product by id: {}", productId);
-        return PRODUCT_MAP.get(productId.getValue());
-    }
-
-    @Override
-    public String getProductNameById(Id productId) {
-        LOGGER.info("Getting product name by id: {}", productId);
-        ProductDTO product = PRODUCT_MAP.get(productId.getValue());
-        return product != null ? product.getProductName() : null;
-    }
-
-    @Override
-    public String getProductImageById(Id productId) {
-        LOGGER.info("Getting product image by id: {}", productId);
-        ProductDTO product = PRODUCT_MAP.get(productId.getValue());
-        return product != null ? product.getProductImage() : null;
-    }
-
-    @Override
-    public Price getProductPriceById(Id productId) {
-        LOGGER.info("Getting product price by id: {}", productId);
-        ProductDTO product = PRODUCT_MAP.get(productId.getValue());
-        return product != null ? Price.ofCNY(product.getPrice().longValue()) : null;
-    }
-
-    @Override
-    public Integer getProductStockById(Id productId) {
-        LOGGER.info("Getting product stock by id: {}", productId);
-        StockDTO stock = STOCK_MAP.get(productId.getValue());
-        return stock != null ? stock.getAvailableStock() : 0;
-    }
-
-    @Override
     public List<ProductDTO> getProductsByIds(List<Id> productIds) {
         LOGGER.info("Getting products by ids: {}", productIds);
         List<ProductDTO> products = new ArrayList<>();
@@ -120,21 +85,6 @@ public class ProductClientImpl implements ProductClient {
 
         LOGGER.info("Got {} products", products.size());
         return products;
-    }
-
-    @Override
-    public Map<Id, Integer> getProductStocksByIds(List<Id> productIds) {
-        LOGGER.info("Getting product stocks by ids: {}", productIds);
-        Map<Id, Integer> stockMap = new ConcurrentHashMap<>();
-
-        for (Id productId : productIds) {
-            StockDTO stock = STOCK_MAP.get(productId.getValue());
-            Integer availableStock = stock != null ? stock.getAvailableStock() : 0;
-            stockMap.put(productId, availableStock);
-        }
-
-        LOGGER.info("Got {} product stocks", stockMap.size());
-        return stockMap;
     }
 
     @Override
@@ -175,82 +125,79 @@ public class ProductClientImpl implements ProductClient {
     }
 
     @Override
-    public boolean lockProductStock(Id productId, Integer quantity) {
-        LOGGER.info("Locking product stock for id: {}, quantity: {}", productId, quantity);
-        StockDTO stock = STOCK_MAP.get(productId.getValue());
-        if (stock == null) {
-            LOGGER.error("Product not found: {}", productId);
-            return false;
+    public boolean unlockProductStock(Map<Id, Integer> productIdQuantities) {
+        LOGGER.info("Unlocking product stocks for ids and quantities: {}", productIdQuantities);
+
+        // 验证所有商品都有足够的锁定库存
+        for (Map.Entry<Id, Integer> entry : productIdQuantities.entrySet()) {
+            Id productId = entry.getKey();
+            Integer quantity = entry.getValue();
+            StockDTO stock = STOCK_MAP.get(productId.getValue());
+
+            if (stock == null) {
+                LOGGER.error("Product not found: {}", productId);
+                return false;
+            }
+
+            if (stock.getLockedStock() < quantity) {
+                LOGGER.error("Insufficient locked stock for product: {}, locked: {}, requested: {}",
+                        productId, stock.getLockedStock(), quantity);
+                return false;
+            }
         }
 
-        if (stock.getAvailableStock() < quantity) {
-            LOGGER.error("Insufficient stock for product: {}, available: {}, requested: {}",
-                    productId, stock.getAvailableStock(), quantity);
-            return false;
+        // 批量解锁库存
+        for (Map.Entry<Id, Integer> entry : productIdQuantities.entrySet()) {
+            Id productId = entry.getKey();
+            Integer quantity = entry.getValue();
+            StockDTO stock = STOCK_MAP.get(productId.getValue());
+
+            // 解锁库存
+            stock.setAvailableStock(stock.getAvailableStock() + quantity);
+            stock.setLockedStock(stock.getLockedStock() - quantity);
         }
 
-        // 锁定库存
-        stock.setAvailableStock(stock.getAvailableStock() - quantity);
-        stock.setLockedStock(stock.getLockedStock() + quantity);
-        LOGGER.info("Locked stock successfully for product: {}", productId);
+        LOGGER.info("Unlocked stocks successfully for all products");
         return true;
     }
 
     @Override
-    public boolean unlockProductStock(Id productId, Integer quantity) {
-        LOGGER.info("Unlocking product stock for id: {}, quantity: {}", productId, quantity);
-        StockDTO stock = STOCK_MAP.get(productId.getValue());
-        if (stock == null) {
-            LOGGER.error("Product not found: {}", productId);
-            return false;
+    public boolean deductProductStock(Map<Id, Integer> productIdQuantities) {
+        LOGGER.info("Deducting product stocks for ids and quantities: {}", productIdQuantities);
+
+        // 验证所有商品都有足够的锁定库存
+        for (Map.Entry<Id, Integer> entry : productIdQuantities.entrySet()) {
+            Id productId = entry.getKey();
+            Integer quantity = entry.getValue();
+            StockDTO stock = STOCK_MAP.get(productId.getValue());
+
+            if (stock == null) {
+                LOGGER.error("Product not found: {}", productId);
+                return false;
+            }
+
+            if (stock.getLockedStock() < quantity) {
+                LOGGER.error("Insufficient locked stock for product: {}, locked: {}, requested: {}",
+                        productId, stock.getLockedStock(), quantity);
+                return false;
+            }
         }
 
-        if (stock.getLockedStock() < quantity) {
-            LOGGER.error("Insufficient locked stock for product: {}, locked: {}, requested: {}",
-                    productId, stock.getLockedStock(), quantity);
-            return false;
+        // 批量扣减库存
+        for (Map.Entry<Id, Integer> entry : productIdQuantities.entrySet()) {
+            Id productId = entry.getKey();
+            Integer quantity = entry.getValue();
+            StockDTO stock = STOCK_MAP.get(productId.getValue());
+
+            // 扣减库存（从锁定库存中扣减）
+            stock.setLockedStock(stock.getLockedStock() - quantity);
+            // 这里可以考虑更新总库存，如果需要的话
+            // stock.setTotalStock(stock.getTotalStock() - quantity);
         }
 
-        // 解锁库存
-        stock.setLockedStock(stock.getLockedStock() - quantity);
-        stock.setAvailableStock(stock.getAvailableStock() + quantity);
-        LOGGER.info("Unlocked stock successfully for product: {}", productId);
+        LOGGER.info("Deducted stocks successfully for all products");
         return true;
     }
 
-    @Override
-    public boolean deductProductStock(Id productId, Integer quantity) {
-        LOGGER.info("Deducting product stock for id: {}, quantity: {}", productId, quantity);
-        StockDTO stock = STOCK_MAP.get(productId.getValue());
-        if (stock == null) {
-            LOGGER.error("Product not found: {}", productId);
-            return false;
-        }
 
-        if (stock.getLockedStock() < quantity) {
-            LOGGER.error("Insufficient locked stock for product: {}, locked: {}, requested: {}",
-                    productId, stock.getLockedStock(), quantity);
-            return false;
-        }
-
-        // 扣减库存
-        stock.setLockedStock(stock.getLockedStock() - quantity);
-        LOGGER.info("Deducted stock successfully for product: {}", productId);
-        return true;
-    }
-
-    @Override
-    public boolean addProductStock(Id productId, Integer quantity) {
-        LOGGER.info("Adding product stock for id: {}, quantity: {}", productId, quantity);
-        StockDTO stock = STOCK_MAP.get(productId.getValue());
-        if (stock == null) {
-            LOGGER.error("Product not found: {}", productId);
-            return false;
-        }
-
-        // 增加库存
-        stock.setAvailableStock(stock.getAvailableStock() + quantity);
-        LOGGER.info("Added stock successfully for product: {}", productId);
-        return true;
-    }
 }

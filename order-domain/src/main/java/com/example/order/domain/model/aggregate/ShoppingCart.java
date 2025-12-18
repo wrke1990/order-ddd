@@ -1,14 +1,14 @@
 package com.example.order.domain.model.aggregate;
 
-import com.example.order.domain.model.entity.ShoppingCartItem;
-import com.example.order.domain.model.vo.Id;
-
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+
+import com.example.order.domain.model.entity.ShoppingCartItem;
+import com.example.order.domain.model.vo.Id;
 
 /**
  * 购物车聚合根
@@ -158,6 +158,26 @@ public class ShoppingCart implements Serializable {
 
         if (existingItem.isPresent()) {
             existingItem.get().increaseQuantity(quantity);
+            this.updateTime = LocalDateTime.now();
+        } else {
+            throw new IllegalArgumentException("商品不存在于购物车中");
+        }
+    }
+
+    /**
+     * 更新商品基本信息（名称、图片、价格）
+     */
+    public void updateItemInfo(Long productId, String productName, String productImage, Long price) {
+        if (productId == null) {
+            throw new IllegalArgumentException("商品ID不能为空");
+        }
+
+        Optional<ShoppingCartItem> existingItem = items.stream()
+                .filter(i -> i.getProductId().equals(productId))
+                .findFirst();
+
+        if (existingItem.isPresent()) {
+            existingItem.get().updateBasicInfo(productName, productImage, price);
             this.updateTime = LocalDateTime.now();
         } else {
             throw new IllegalArgumentException("商品不存在于购物车中");
