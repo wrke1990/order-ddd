@@ -53,3 +53,4 @@ logs/
 
 # Maven wrapper
 .mvn/wrapper/maven-wrapper.properties
+*.class
