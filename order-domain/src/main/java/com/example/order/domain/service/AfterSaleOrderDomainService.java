@@ -22,7 +22,6 @@ public interface AfterSaleOrderDomainService {
     /**
      * 创建多商品售后单
      * @param afterSaleNo 售后单号
-     * @param orderId 订单ID
      * @param orderNo 订单号
      * @param userId 用户ID
      * @param type 售后类型
@@ -32,20 +31,19 @@ public interface AfterSaleOrderDomainService {
      * @param afterSaleItems 售后商品项列表
      * @return 创建后的售后单
      */
-    AfterSaleOrder createAfterSaleOrder(String afterSaleNo, Long orderId, String orderNo, Long userId,
+    AfterSaleOrder createAfterSaleOrder(String afterSaleNo, String orderNo, Long userId,
                                        AfterSaleType type, String reason, String description, String images,
                                        List<AfterSaleItem> afterSaleItems);
 
     /**
      * 创建多商品超级退款
      * @param afterSaleNo 售后单号
-     * @param orderId 订单ID
      * @param orderNo 订单号
      * @param userId 用户ID
      * @param afterSaleItems 售后商品项列表
      * @return 创建后的售后单
      */
-    AfterSaleOrder createSuperRefund(String afterSaleNo, Long orderId, String orderNo, Long userId,
+    AfterSaleOrder createSuperRefund(String afterSaleNo, String orderNo, Long userId,
                                     List<AfterSaleItem> afterSaleItems);
 
     /**

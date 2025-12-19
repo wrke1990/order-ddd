@@ -16,6 +16,9 @@ public class ShoppingCartItemPO {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @Column(name = "shopping_cart_no", nullable = false, length = 32)
+    private String shoppingCartNo;
+
     @Column(name = "product_id", nullable = false)
     private Long productId;
 
@@ -38,7 +41,7 @@ public class ShoppingCartItemPO {
     private Boolean selected;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", referencedColumnName = "user_id", insertable = false, updatable = false)
+    @JoinColumn(name = "shopping_cart_no", referencedColumnName = "shopping_cart_no", insertable = false, updatable = false)
     private ShoppingCartPO shoppingCart;
 
     public Long getId() {
@@ -111,6 +114,14 @@ public class ShoppingCartItemPO {
 
     public void setSelected(Boolean selected) {
         this.selected = selected;
+    }
+
+    public String getShoppingCartNo() {
+        return shoppingCartNo;
+    }
+
+    public void setShoppingCartNo(String shoppingCartNo) {
+        this.shoppingCartNo = shoppingCartNo;
     }
 
     public ShoppingCartPO getShoppingCart() {

@@ -1,14 +1,18 @@
 package com.example.order.server.application.assember;
 
 import com.example.order.domain.model.aggregate.AfterSaleOrder;
+import com.example.order.domain.model.entity.AfterSaleItem;
 import com.example.order.domain.model.vo.Price;
+import com.example.order.server.application.dto.AfterSaleItemResponse;
 import com.example.order.server.application.dto.AfterSaleOrderResponse;
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.Generated;
 import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-12-18T16:47:34+0800",
+    date = "2025-12-19T17:54:38+0800",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 23.0.1 (GraalVM Community)"
 )
 @Component
@@ -27,6 +31,7 @@ public class AfterSaleOrderDtoAssemblerImpl implements AfterSaleOrderDtoAssemble
         afterSaleOrderResponse.setAfterSaleNo( afterSaleOrder.getAfterSaleNo() );
         afterSaleOrderResponse.setOrderNo( afterSaleOrder.getOrderNo() );
         afterSaleOrderResponse.setUserId( afterSaleOrder.getUserId() );
+        afterSaleOrderResponse.setAfterSaleItems( afterSaleItemListToAfterSaleItemResponseList( afterSaleOrder.getAfterSaleItems() ) );
         if ( afterSaleOrder.getStatus() != null ) {
             afterSaleOrderResponse.setStatus( afterSaleOrder.getStatus().name() );
         }
@@ -55,5 +60,18 @@ public class AfterSaleOrderDtoAssemblerImpl implements AfterSaleOrderDtoAssemble
             return null;
         }
         return amount;
+    }
+
+    protected List<AfterSaleItemResponse> afterSaleItemListToAfterSaleItemResponseList(List<AfterSaleItem> list) {
+        if ( list == null ) {
+            return null;
+        }
+
+        List<AfterSaleItemResponse> list1 = new ArrayList<AfterSaleItemResponse>( list.size() );
+        for ( AfterSaleItem afterSaleItem : list ) {
+            list1.add( toAfterSaleItemResponse( afterSaleItem ) );
+        }
+
+        return list1;
     }
 }

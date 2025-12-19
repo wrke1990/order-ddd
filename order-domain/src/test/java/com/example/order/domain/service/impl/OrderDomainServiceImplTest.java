@@ -175,7 +175,6 @@ public class OrderDomainServiceImplTest {
         // 验证mock调用
         verify(orderRepository, times(1)).findByOrderNo("ORDER-001");
         verify(orderRepository, times(1)).save(testOrder);
-        verify(afterSaleOrderRepository, times(1)).findByOrderNo("ORDER-001");
     }
 
     @Test

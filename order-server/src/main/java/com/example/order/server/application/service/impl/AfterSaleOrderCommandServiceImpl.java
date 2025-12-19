@@ -1,5 +1,13 @@
 package com.example.order.server.application.service.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.order.common.exception.BusinessException;
 import com.example.order.domain.model.aggregate.AfterSaleOrder;
 import com.example.order.domain.model.entity.AfterSaleItem;
@@ -9,16 +17,10 @@ import com.example.order.domain.model.vo.Price;
 import com.example.order.domain.repository.AfterSaleOrderRepository;
 import com.example.order.infrastructure.acl.payment.PaymentClient;
 import com.example.order.server.application.assember.AfterSaleOrderDtoAssembler;
+import com.example.order.server.application.dto.AfterSaleItemRequest;
 import com.example.order.server.application.dto.AfterSaleOrderResponse;
 import com.example.order.server.application.dto.CreateAfterSaleOrderCommand;
 import com.example.order.server.application.service.AfterSaleOrderCommandService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 售后订单命令服务实现类
@@ -43,28 +45,29 @@ public class AfterSaleOrderCommandServiceImpl implements AfterSaleOrderCommandSe
     @Override
     @Transactional
     public AfterSaleOrderResponse createAfterSaleOrder(CreateAfterSaleOrderCommand request) {
-        log.info("创建售后订单，用户ID: {}, 订单号: {}, 售后类型: {}, 申请金额: {}",
-                request.getUserId(), request.getOrderNo(), request.getAfterSaleType(), request.getApplyAmount());
+        log.info("创建售后订单，用户ID: {}, 订单号: {}, 售后类型: {}",
+                request.getUserId(), request.getOrderNo(), request.getAfterSaleType());
 
         // 生成售后单号（可以使用UUID或雪花算法）
         String afterSaleNo = "ASO" + System.currentTimeMillis();
 
-        // 创建售后商品项
-        AfterSaleItem afterSaleItem = AfterSaleItem.create(
-                request.getProductId(),
-                request.getProductName(),
-                request.getProductImage(),
-                request.getQuantity(),
-                new Price(request.getApplyAmount(), request.getCurrency()),
-                request.getQuantity() // 退款数量默认为申请数量
-        );
+        // 创建售后商品项列表
         List<AfterSaleItem> afterSaleItems = new ArrayList<>();
-        afterSaleItems.add(afterSaleItem);
+        for (AfterSaleItemRequest itemRequest : request.getAfterSaleItems()) {
+            AfterSaleItem afterSaleItem = AfterSaleItem.create(
+                    itemRequest.getProductId(),
+                    itemRequest.getProductName(),
+                    itemRequest.getProductImage(),
+                    itemRequest.getQuantity(),
+                    new Price(itemRequest.getApplyAmount(), itemRequest.getCurrency()),
+                    itemRequest.getQuantity() // 退款数量默认为申请数量
+            );
+            afterSaleItems.add(afterSaleItem);
+        }
 
         // 创建售后单聚合根
         AfterSaleOrder afterSaleOrder = AfterSaleOrder.create(
                 afterSaleNo,
-                null, // orderId由订单服务后续填充
                 request.getOrderNo(),
                 request.getUserId(),
                 AfterSaleType.valueOf(request.getAfterSaleType()),

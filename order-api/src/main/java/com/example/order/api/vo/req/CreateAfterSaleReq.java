@@ -1,8 +1,11 @@
 package com.example.order.api.vo.req;
 
+import java.util.List;
+
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 /**
  * 创建售后请求VO
@@ -16,24 +19,9 @@ public class CreateAfterSaleReq {
     @NotEmpty(message = "订单号不能为空")
     private String orderNo;
 
-    @NotNull(message = "商品ID不能为空")
-    @Min(value = 1, message = "商品ID必须大于0")
-    private Long productId;
-
-    @NotEmpty(message = "商品名称不能为空")
-    private String productName;
-
-    private String productImage;
-
-    @NotNull(message = "商品数量不能为空")
-    @Min(value = 1, message = "商品数量必须大于0")
-    private Integer quantity;
-
-    @NotNull(message = "申请金额不能为空")
-    @Min(value = 0, message = "申请金额必须大于等于0")
-    private Long applyAmount;
-
-    private String currency = "CNY";
+    @NotNull(message = "商品项列表不能为空")
+    @Size(min = 1, message = "至少需要一个商品项")
+    private List<AfterSaleItemReq> afterSaleItems;
 
     @NotEmpty(message = "售后类型不能为空")
     private String afterSaleType;
@@ -59,52 +47,12 @@ public class CreateAfterSaleReq {
         this.orderNo = orderNo;
     }
 
-    public Long getProductId() {
-        return productId;
+    public List<AfterSaleItemReq> getAfterSaleItems() {
+        return afterSaleItems;
     }
 
-    public void setProductId(Long productId) {
-        this.productId = productId;
-    }
-
-    public String getProductName() {
-        return productName;
-    }
-
-    public void setProductName(String productName) {
-        this.productName = productName;
-    }
-
-    public String getProductImage() {
-        return productImage;
-    }
-
-    public void setProductImage(String productImage) {
-        this.productImage = productImage;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public Long getApplyAmount() {
-        return applyAmount;
-    }
-
-    public void setApplyAmount(Long applyAmount) {
-        this.applyAmount = applyAmount;
-    }
-
-    public String getCurrency() {
-        return currency;
-    }
-
-    public void setCurrency(String currency) {
-        this.currency = currency;
+    public void setAfterSaleItems(List<AfterSaleItemReq> afterSaleItems) {
+        this.afterSaleItems = afterSaleItems;
     }
 
     public String getAfterSaleType() {

@@ -1,5 +1,11 @@
 package com.example.order.domain.model.aggregate;
 
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import com.example.order.domain.model.entity.AfterSaleItem;
 import com.example.order.domain.model.event.AfterSaleOrderApprovedEvent;
 import com.example.order.domain.model.event.AfterSaleOrderCreatedEvent;
@@ -8,12 +14,6 @@ import com.example.order.domain.model.event.DomainEvent;
 import com.example.order.domain.model.vo.AfterSaleStatus;
 import com.example.order.domain.model.vo.AfterSaleType;
 import com.example.order.domain.model.vo.Price;
-
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * 售后单聚合根
@@ -24,7 +24,6 @@ public class AfterSaleOrder implements Serializable {
 
     private Long id;
     private String afterSaleNo;
-    private Long orderId;
     private String orderNo;
     private Long userId;
     private AfterSaleType type;
@@ -49,11 +48,10 @@ public class AfterSaleOrder implements Serializable {
     /**
      * 私有构造函数，确保通过工厂方法创建
      */
-    private AfterSaleOrder(String afterSaleNo, Long orderId, String orderNo, Long userId,
+    private AfterSaleOrder(String afterSaleNo, String orderNo, Long userId,
                           AfterSaleType type, String reason, String description, String images,
                           List<AfterSaleItem> afterSaleItems) {
         this.afterSaleNo = afterSaleNo;
-        this.orderId = orderId;
         this.orderNo = orderNo;
         this.userId = userId;
         this.type = type;
@@ -79,7 +77,6 @@ public class AfterSaleOrder implements Serializable {
     /**
      * 创建售后单
      * @param afterSaleNo 售后单号
-     * @param orderId 订单ID
      * @param orderNo 订单号
      * @param userId 用户ID
      * @param type 售后类型
@@ -89,15 +86,15 @@ public class AfterSaleOrder implements Serializable {
      * @param afterSaleItems 售后商品项列表
      * @param adminInitiated 是否由管理员发起（超级退款）
      */
-    public static AfterSaleOrder create(String afterSaleNo, Long orderId, String orderNo,
+    public static AfterSaleOrder create(String afterSaleNo, String orderNo,
                                        Long userId, AfterSaleType type,
                                        String reason, String description, String images,
                                        List<AfterSaleItem> afterSaleItems,
                                        boolean adminInitiated) {
-        validateBasicInfo(afterSaleNo, orderId, orderNo, userId, type, reason);
+        validateBasicInfo(afterSaleNo, orderNo, userId, type, reason);
         validateAfterSaleItems(afterSaleItems);
 
-        AfterSaleOrder afterSaleOrder = new AfterSaleOrder(afterSaleNo, orderId, orderNo, userId, type, reason, description, images, afterSaleItems);
+        AfterSaleOrder afterSaleOrder = new AfterSaleOrder(afterSaleNo, orderNo, userId, type, reason, description, images, afterSaleItems);
         afterSaleOrder.adminInitiated = adminInitiated;
         afterSaleOrder.createAfterSaleOrderCreatedEvent();
         return afterSaleOrder;
@@ -106,11 +103,41 @@ public class AfterSaleOrder implements Serializable {
     /**
      * 创建超级退款（客服发起）
      */
-    public static AfterSaleOrder createSuperRefund(String afterSaleNo, Long orderId, String orderNo,
+    public static AfterSaleOrder createSuperRefund(String afterSaleNo, String orderNo,
                                                  Long userId, List<AfterSaleItem> afterSaleItems) {
-        return create(afterSaleNo, orderId, orderNo, userId,
+        return create(afterSaleNo, orderNo, userId,
                      AfterSaleType.REFUND_ONLY, "超级退款", null, null,
                      afterSaleItems, true);
+    }
+
+    /**
+     * 从持久化数据重建售后订单对象
+     * 此方法用于基础设施层从数据库加载数据时重建领域对象，跳过业务规则验证
+     */
+    public static AfterSaleOrder reconstruct(Long id, String afterSaleNo, String orderNo,
+                                            Long userId, AfterSaleType type, AfterSaleStatus status,
+                                            String reason, String description, String images, Boolean adminInitiated,
+                                            LocalDateTime createTime, LocalDateTime updateTime, Integer version,
+                                            Long customerServiceId, String reverseLogisticsNo, String reviewReason,
+                                            String refundReason, Price totalRefundAmount, List<AfterSaleItem> afterSaleItems) {
+
+        // 创建售后订单对象
+        AfterSaleOrder afterSaleOrder = new AfterSaleOrder(afterSaleNo, orderNo, userId, type, reason, description, images, afterSaleItems);
+
+        // 设置从数据库加载的属性
+        afterSaleOrder.id = id;
+        afterSaleOrder.status = status;
+        afterSaleOrder.totalRefundAmount = totalRefundAmount;
+        afterSaleOrder.adminInitiated = adminInitiated;
+        afterSaleOrder.createTime = createTime;
+        afterSaleOrder.updateTime = updateTime;
+        afterSaleOrder.version = version;
+        afterSaleOrder.customerServiceId = customerServiceId;
+        afterSaleOrder.reverseLogisticsNo = reverseLogisticsNo;
+        afterSaleOrder.reviewReason = reviewReason;
+        afterSaleOrder.refundReason = refundReason;
+
+        return afterSaleOrder;
     }
 
     // ======================== 状态转换方法 ========================
@@ -294,12 +321,12 @@ public class AfterSaleOrder implements Serializable {
     /**
      * 验证基本信息
      */
-    private static void validateBasicInfo(String afterSaleNo, Long orderId, String orderNo,
+    private static void validateBasicInfo(String afterSaleNo, String orderNo,
                                          Long userId, AfterSaleType type, String reason) {
         if (afterSaleNo == null || afterSaleNo.isEmpty()) {
             throw new IllegalArgumentException("售后单号不能为空");
         }
-        if (orderId == null || orderNo == null || orderNo.isEmpty()) {
+        if (orderNo == null || orderNo.isEmpty()) {
             throw new IllegalArgumentException("订单信息不能为空");
         }
         if (userId == null) {
@@ -379,9 +406,7 @@ public class AfterSaleOrder implements Serializable {
         this.afterSaleItems.forEach(item -> item.setAfterSaleNo(afterSaleNo));
     }
 
-    public Long getOrderId() {
-        return orderId;
-    }
+
 
     public String getOrderNo() {
         return orderNo;

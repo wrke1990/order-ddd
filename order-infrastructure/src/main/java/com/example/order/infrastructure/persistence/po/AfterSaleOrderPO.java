@@ -1,7 +1,18 @@
 package com.example.order.infrastructure.persistence.po;
 
-import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.persistence.Version;
 
 /**
  * 售后订单持久化对象
@@ -23,29 +34,22 @@ public class AfterSaleOrderPO {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "product_id", nullable = false)
-    private Long productId;
-
-    @Column(name = "product_name", nullable = false, length = 100)
-    private String productName;
-
-    @Column(name = "product_image", length = 200)
-    private String productImage;
-
-    @Column(name = "quantity", nullable = false)
-    private Integer quantity;
-
     @Column(name = "after_sale_type", nullable = false, length = 20)
     private String afterSaleType;
 
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
-    @Column(name = "refund_amount", nullable = false)
-    private Long refundAmount;
+    // 关联售后商品项
+    @OneToMany(mappedBy = "afterSaleNo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<AfterSaleItemPO> afterSaleItems;
 
-    @Column(name = "currency", nullable = false, length = 10)
-    private String currency;
+    // 总退款金额和货币
+    @Column(name = "total_refund_amount", nullable = false)
+    private Long totalRefundAmount;
+
+    @Column(name = "total_currency", nullable = false, length = 10)
+    private String totalCurrency;
 
     @Column(name = "reason", nullable = false, length = 200)
     private String reason;
@@ -107,38 +111,6 @@ public class AfterSaleOrderPO {
         this.userId = userId;
     }
 
-    public Long getProductId() {
-        return productId;
-    }
-
-    public void setProductId(Long productId) {
-        this.productId = productId;
-    }
-
-    public String getProductName() {
-        return productName;
-    }
-
-    public void setProductName(String productName) {
-        this.productName = productName;
-    }
-
-    public String getProductImage() {
-        return productImage;
-    }
-
-    public void setProductImage(String productImage) {
-        this.productImage = productImage;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
     public String getAfterSaleType() {
         return afterSaleType;
     }
@@ -155,20 +127,28 @@ public class AfterSaleOrderPO {
         this.status = status;
     }
 
-    public Long getRefundAmount() {
-        return refundAmount;
+    public List<AfterSaleItemPO> getAfterSaleItems() {
+        return afterSaleItems;
     }
 
-    public void setRefundAmount(Long refundAmount) {
-        this.refundAmount = refundAmount;
+    public void setAfterSaleItems(List<AfterSaleItemPO> afterSaleItems) {
+        this.afterSaleItems = afterSaleItems;
     }
 
-    public String getCurrency() {
-        return currency;
+    public Long getTotalRefundAmount() {
+        return totalRefundAmount;
     }
 
-    public void setCurrency(String currency) {
-        this.currency = currency;
+    public void setTotalRefundAmount(Long totalRefundAmount) {
+        this.totalRefundAmount = totalRefundAmount;
+    }
+
+    public String getTotalCurrency() {
+        return totalCurrency;
+    }
+
+    public void setTotalCurrency(String totalCurrency) {
+        this.totalCurrency = totalCurrency;
     }
 
     public String getReason() {

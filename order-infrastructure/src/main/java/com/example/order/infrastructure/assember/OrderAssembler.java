@@ -1,5 +1,11 @@
 package com.example.order.infrastructure.assember;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Component;
+
 import com.example.order.domain.model.aggregate.Order;
 import com.example.order.domain.model.entity.OrderItem;
 import com.example.order.domain.model.vo.Id;
@@ -7,11 +13,6 @@ import com.example.order.domain.model.vo.OrderStatus;
 import com.example.order.domain.model.vo.Price;
 import com.example.order.infrastructure.persistence.po.OrderItemPO;
 import com.example.order.infrastructure.persistence.po.OrderPO;
-import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 订单对象映射器
@@ -74,44 +75,19 @@ public class OrderAssembler {
                     .collect(Collectors.toList());
         }
 
-        // 使用反射创建订单对象
-        try {
-            // 获取私有构造函数
-            java.lang.reflect.Constructor<Order> constructor = Order.class.getDeclaredConstructor(Id.class, List.class);
-            constructor.setAccessible(true);
-
-            // 创建订单对象
-            Order order = constructor.newInstance(Id.of(orderPO.getUserId()), orderItems);
-
-            // 使用反射设置其他属性
-            java.lang.reflect.Field idField = Order.class.getDeclaredField("id");
-            idField.setAccessible(true);
-            idField.set(order, Id.of(orderPO.getId()));
-
-            java.lang.reflect.Field orderNoField = Order.class.getDeclaredField("orderNo");
-            orderNoField.setAccessible(true);
-            orderNoField.set(order, orderPO.getOrderNo());
-
-            java.lang.reflect.Field statusField = Order.class.getDeclaredField("status");
-            statusField.setAccessible(true);
-            statusField.set(order, OrderStatus.valueOf(orderPO.getStatus()));
-
-            java.lang.reflect.Field totalAmountField = Order.class.getDeclaredField("totalAmount");
-            totalAmountField.setAccessible(true);
-            totalAmountField.set(order, new Price(orderPO.getTotalAmount(), orderPO.getCurrency()));
-
-            java.lang.reflect.Field updateTimeField = Order.class.getDeclaredField("updateTime");
-            updateTimeField.setAccessible(true);
-            updateTimeField.set(order, orderPO.getUpdateTime());
-
-            java.lang.reflect.Field versionField = Order.class.getDeclaredField("version");
-            versionField.setAccessible(true);
-            versionField.set(order, orderPO.getVersion());
-
-            return order;
-        } catch (Exception e) {
-            throw new RuntimeException("转换订单PO为领域对象失败", e);
-        }
+        // 使用reconstruct方法创建订单对象，替代反射
+        return Order.reconstruct(
+                Id.of(orderPO.getId()),
+                Id.of(orderPO.getUserId()),
+                orderPO.getOrderNo(),
+                OrderStatus.valueOf(orderPO.getStatus()),
+                new Price(orderPO.getTotalAmount(), orderPO.getCurrency()),
+                orderPO.getCreateTime(),
+                orderPO.getUpdateTime(),
+                null, // expireTime，从PO中无法获取
+                orderPO.getVersion(),
+                orderItems
+        );
     }
 
     /**
@@ -144,24 +120,17 @@ public class OrderAssembler {
         }
 
         // 使用工厂方法创建订单项
-        OrderItem orderItem = OrderItem.create(Id.of(orderItemPO.getProductId()),
-                                               orderItemPO.getProductName(),
-                                               orderItemPO.getQuantity(),
-                                               new Price(orderItemPO.getPrice(), orderItemPO.getCurrency()));
+        OrderItem orderItem = OrderItem.create(
+                Id.of(orderItemPO.getProductId()),
+                orderItemPO.getProductName(),
+                orderItemPO.getQuantity(),
+                new Price(orderItemPO.getPrice(), orderItemPO.getCurrency())
+        );
 
-        // 使用反射设置其他属性
-        try {
-            java.lang.reflect.Field idField = OrderItem.class.getDeclaredField("id");
-            idField.setAccessible(true);
-            idField.set(orderItem, Id.of(orderItemPO.getId()));
+        // 使用公共setter方法设置属性，替代反射
+        orderItem.setId(Id.of(orderItemPO.getId()));
+        orderItem.setOrderNo(orderItemPO.getOrderNo());
 
-            java.lang.reflect.Field orderNoField = OrderItem.class.getDeclaredField("orderNo");
-            orderNoField.setAccessible(true);
-            orderNoField.set(orderItem, orderItemPO.getOrderNo());
-
-            return orderItem;
-        } catch (Exception e) {
-            throw new RuntimeException("转换订单项PO为领域对象失败", e);
-        }
+        return orderItem;
     }
 }

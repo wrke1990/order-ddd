@@ -1,15 +1,27 @@
 package com.example.order.domain.model.aggregate;
 
-import com.example.order.domain.model.entity.OrderItem;
-import com.example.order.domain.model.event.*;
-import com.example.order.domain.model.vo.*;
-import com.example.order.domain.service.validator.OrderBusinessRuleValidator;
-
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import com.example.order.domain.model.entity.OrderItem;
+import com.example.order.domain.model.event.DomainEvent;
+import com.example.order.domain.model.event.OrderAddressUpdatedEvent;
+import com.example.order.domain.model.event.OrderCancelledEvent;
+import com.example.order.domain.model.event.OrderCreatedEvent;
+import com.example.order.domain.model.event.OrderPaidEvent;
+import com.example.order.domain.model.event.OrderReceivedEvent;
+import com.example.order.domain.model.event.OrderShippedEvent;
+import com.example.order.domain.model.vo.Address;
+import com.example.order.domain.model.vo.Coupon;
+import com.example.order.domain.model.vo.Id;
+import com.example.order.domain.model.vo.LogisticsInfo;
+import com.example.order.domain.model.vo.OrderStatus;
+import com.example.order.domain.model.vo.PaymentMethod;
+import com.example.order.domain.model.vo.Price;
+import com.example.order.domain.service.validator.OrderBusinessRuleValidator;
 
 /**
  * 订单聚合根
@@ -88,6 +100,45 @@ public class Order implements Serializable {
         }
 
         order.createOrderEvent();
+
+        return order;
+    }
+
+    /**
+     * 从持久化数据重建订单（仅用于基础设施层）
+     * 此方法用于从数据库加载订单数据时重建订单对象，跳过业务规则验证
+     */
+    public static Order reconstruct(Id id, Id userId, String orderNo, OrderStatus status,
+                                   Price totalAmount, LocalDateTime createTime, LocalDateTime updateTime,
+                                   LocalDateTime expireTime, Integer version, List<OrderItem> orderItems) {
+        // 复制订单项列表，避免外部修改
+        List<OrderItem> copiedItems = new ArrayList<>(orderItems.size());
+        for (OrderItem item : orderItems) {
+            OrderItem copiedItem = OrderItem.create(
+                    item.getProductId(),
+                    item.getProductName(),
+                    item.getQuantity(),
+                    item.getPrice()
+            );
+            if (item.getId() != null) {
+                copiedItem.setId(item.getId());
+            }
+            if (item.getOrderNo() != null) {
+                copiedItem.setOrderNo(item.getOrderNo());
+            }
+            copiedItems.add(copiedItem);
+        }
+
+        // 创建订单对象，shippingAddress和paymentMethod设为null，因为从PO中无法获取
+        Order order = new Order(userId, copiedItems, orderNo, null, null);
+
+        // 设置从数据库加载的属性
+        order.id = id;
+        order.status = status;
+        order.totalAmount = totalAmount;
+        order.updateTime = updateTime;
+        order.expireTime = expireTime;
+        order.version = version;
 
         return order;
     }

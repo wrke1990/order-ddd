@@ -1,6 +1,7 @@
 package com.example.order.api.vo.resp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 售后响应VO
@@ -11,12 +12,7 @@ public class AfterSaleResp {
     private String afterSaleNo;
     private String orderNo;
     private Long userId;
-    private Long productId;
-    private String productName;
-    private String productImage;
-    private Integer quantity;
-    private Long applyAmount;
-    private String currency;
+    private List<AfterSaleItemResp> afterSaleItems;
     private Long refundAmount;
     private String afterSaleType;
     private String status;
@@ -61,52 +57,12 @@ public class AfterSaleResp {
         this.userId = userId;
     }
 
-    public Long getProductId() {
-        return productId;
+    public List<AfterSaleItemResp> getAfterSaleItems() {
+        return afterSaleItems;
     }
 
-    public void setProductId(Long productId) {
-        this.productId = productId;
-    }
-
-    public String getProductName() {
-        return productName;
-    }
-
-    public void setProductName(String productName) {
-        this.productName = productName;
-    }
-
-    public String getProductImage() {
-        return productImage;
-    }
-
-    public void setProductImage(String productImage) {
-        this.productImage = productImage;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public Long getApplyAmount() {
-        return applyAmount;
-    }
-
-    public void setApplyAmount(Long applyAmount) {
-        this.applyAmount = applyAmount;
-    }
-
-    public String getCurrency() {
-        return currency;
-    }
-
-    public void setCurrency(String currency) {
-        this.currency = currency;
+    public void setAfterSaleItems(List<AfterSaleItemResp> afterSaleItems) {
+        this.afterSaleItems = afterSaleItems;
     }
 
     public Long getRefundAmount() {

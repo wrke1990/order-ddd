@@ -1,8 +1,8 @@
 package com.example.order.domain.model.entity;
 
-import com.example.order.domain.model.vo.Price;
-
 import java.io.Serializable;
+
+import com.example.order.domain.model.vo.Price;
 
 /**
  * 购物车项实体
@@ -13,6 +13,7 @@ public class ShoppingCartItem implements Serializable {
     private static final int MAX_QUANTITY = 99;
 
     private Long id;
+    private String shoppingCartNo;
     private Long cartId;
     private Long userId;
     private final Long productId;
@@ -27,7 +28,7 @@ public class ShoppingCartItem implements Serializable {
     /**
      * 创建购物车项
      */
-    public static ShoppingCartItem create(Long productId, String productName, String productImage, 
+    public static ShoppingCartItem create(Long productId, String productName, String productImage,
                                          Integer quantity, Price price, boolean available) {
         if (productId == null) {
             throw new IllegalArgumentException("商品ID不能为空");
@@ -42,7 +43,7 @@ public class ShoppingCartItem implements Serializable {
             throw new IllegalArgumentException("商品价格必须大于0");
         }
 
-        ShoppingCartItem item = new ShoppingCartItem(productId, productName, productImage, 
+        ShoppingCartItem item = new ShoppingCartItem(productId, productName, productImage,
                                                    quantity, price, available);
         return item;
     }
@@ -50,7 +51,7 @@ public class ShoppingCartItem implements Serializable {
     /**
      * 私有构造函数，确保通过工厂方法创建
      */
-    private ShoppingCartItem(Long productId, String productName, String productImage, 
+    private ShoppingCartItem(Long productId, String productName, String productImage,
                            Integer quantity, Price price, boolean available) {
         this.productId = productId;
         this.productName = productName;
@@ -146,6 +147,14 @@ public class ShoppingCartItem implements Serializable {
         this.cartId = cartId;
     }
 
+    public String getShoppingCartNo() {
+        return shoppingCartNo;
+    }
+
+    public void setShoppingCartNo(String shoppingCartNo) {
+        this.shoppingCartNo = shoppingCartNo;
+    }
+
     public Long getUserId() {
         return userId;
     }
@@ -194,6 +203,32 @@ public class ShoppingCartItem implements Serializable {
 
     public String getUnavailableReason() {
         return unavailableReason;
+    }
+
+    /**
+     * 重建购物车项对象，用于从持久化数据重建领域对象
+     */
+    public static ShoppingCartItem reconstruct(
+            Long id,
+            String shoppingCartNo,
+            Long cartId,
+            Long userId,
+            Long productId,
+            String productName,
+            String productImage,
+            Integer quantity,
+            Price price,
+            boolean selected,
+            boolean available,
+            String unavailableReason) {
+        ShoppingCartItem item = new ShoppingCartItem(productId, productName, productImage, quantity, price, available);
+        item.id = id;
+        item.shoppingCartNo = shoppingCartNo;
+        item.cartId = cartId;
+        item.userId = userId;
+        item.selected = selected;
+        item.unavailableReason = unavailableReason;
+        return item;
     }
 
     @Override

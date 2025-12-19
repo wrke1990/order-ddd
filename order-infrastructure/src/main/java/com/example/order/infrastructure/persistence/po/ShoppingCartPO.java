@@ -1,8 +1,18 @@
 package com.example.order.infrastructure.persistence.po;
 
-import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.persistence.Version;
 
 /**
  * 购物车持久化对象
@@ -10,9 +20,14 @@ import java.util.List;
 @Entity
 @Table(name = "t_shopping_cart")
 public class ShoppingCartPO {
-
     @Id
-    @Column(name = "user_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "shopping_cart_no", nullable = false, unique = true, length = 32)
+    private String shoppingCartNo;
+
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
     @Column(name = "create_time", nullable = false)
@@ -27,6 +42,16 @@ public class ShoppingCartPO {
 
     @OneToMany(mappedBy = "shoppingCart", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ShoppingCartItemPO> items;
+
+
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public Long getUserId() {
         return userId;
@@ -58,6 +83,14 @@ public class ShoppingCartPO {
 
     public void setVersion(Integer version) {
         this.version = version;
+    }
+
+    public String getShoppingCartNo() {
+        return shoppingCartNo;
+    }
+
+    public void setShoppingCartNo(String shoppingCartNo) {
+        this.shoppingCartNo = shoppingCartNo;
     }
 
     public List<ShoppingCartItemPO> getItems() {

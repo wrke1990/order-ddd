@@ -52,7 +52,7 @@ public class AfterSaleOrderDomainServiceImpl implements AfterSaleOrderDomainServ
     }
 
     @Override
-    public AfterSaleOrder createAfterSaleOrder(String afterSaleNo, Long orderId, String orderNo, Long userId,
+    public AfterSaleOrder createAfterSaleOrder(String afterSaleNo, String orderNo, Long userId,
                                              AfterSaleType type, String reason, String description, String images,
                                              List<AfterSaleItem> afterSaleItems) {
         logger.info("创建多商品售后单，订单号: {}, 售后类型: {}, 商品数量: {}",
@@ -69,7 +69,7 @@ public class AfterSaleOrderDomainServiceImpl implements AfterSaleOrderDomainServ
         validateOrderItemsForAfterSale(order, afterSaleItems);
 
         // 创建售后单
-        AfterSaleOrder afterSaleOrder = AfterSaleOrder.create(afterSaleNo, orderId, orderNo, userId,
+        AfterSaleOrder afterSaleOrder = AfterSaleOrder.create(afterSaleNo, orderNo, userId,
                 type, reason, description, images, afterSaleItems, false);
 
         // 保存售后单
@@ -80,7 +80,7 @@ public class AfterSaleOrderDomainServiceImpl implements AfterSaleOrderDomainServ
     }
 
     @Override
-    public AfterSaleOrder createSuperRefund(String afterSaleNo, Long orderId, String orderNo, Long userId,
+    public AfterSaleOrder createSuperRefund(String afterSaleNo, String orderNo, Long userId,
                                           List<AfterSaleItem> afterSaleItems) {
         logger.info("创建多商品超级退款，订单号: {}, 商品数量: {}",
                 orderNo, afterSaleItems != null ? afterSaleItems.size() : 0);
@@ -96,7 +96,7 @@ public class AfterSaleOrderDomainServiceImpl implements AfterSaleOrderDomainServ
         validateOrderItemsForAfterSale(order, afterSaleItems);
 
         // 创建超级退款
-        AfterSaleOrder afterSaleOrder = AfterSaleOrder.createSuperRefund(afterSaleNo, orderId, orderNo, userId, afterSaleItems);
+        AfterSaleOrder afterSaleOrder = AfterSaleOrder.createSuperRefund(afterSaleNo, orderNo, userId, afterSaleItems);
 
         // 保存售后单
         AfterSaleOrder savedAfterSaleOrder = afterSaleOrderRepository.save(afterSaleOrder);

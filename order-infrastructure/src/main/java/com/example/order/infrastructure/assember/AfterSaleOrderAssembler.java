@@ -1,7 +1,9 @@
 package com.example.order.infrastructure.assember;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
@@ -9,6 +11,8 @@ import com.example.order.domain.model.aggregate.AfterSaleOrder;
 import com.example.order.domain.model.entity.AfterSaleItem;
 import com.example.order.domain.model.vo.AfterSaleStatus;
 import com.example.order.domain.model.vo.AfterSaleType;
+import com.example.order.domain.model.vo.Price;
+import com.example.order.infrastructure.persistence.po.AfterSaleItemPO;
 import com.example.order.infrastructure.persistence.po.AfterSaleOrderPO;
 
 /**
@@ -42,7 +46,48 @@ public class AfterSaleOrderAssembler {
         afterSaleOrderPO.setReviewReason(afterSaleOrder.getReviewReason());
         afterSaleOrderPO.setRefundReason(afterSaleOrder.getRefundReason());
 
+        // 设置总退款金额和货币
+        afterSaleOrderPO.setTotalRefundAmount(afterSaleOrder.getTotalRefundAmount().getAmount());
+        afterSaleOrderPO.setTotalCurrency(afterSaleOrder.getTotalRefundAmount().getCurrency());
+
+        // 转换售后商品项
+        if (afterSaleOrder.getAfterSaleItems() != null && !afterSaleOrder.getAfterSaleItems().isEmpty()) {
+            List<AfterSaleItemPO> afterSaleItemPOs = afterSaleOrder.getAfterSaleItems().stream()
+                    .map(this::toAfterSaleItemPO)
+                    .collect(Collectors.toList());
+            afterSaleOrderPO.setAfterSaleItems(afterSaleItemPOs);
+        }
+
         return afterSaleOrderPO;
+    }
+
+    /**
+     * 售后商品项领域对象转PO
+     */
+    private AfterSaleItemPO toAfterSaleItemPO(AfterSaleItem afterSaleItem) {
+        if (afterSaleItem == null) {
+            return null;
+        }
+
+        AfterSaleItemPO afterSaleItemPO = new AfterSaleItemPO();
+        afterSaleItemPO.setAfterSaleNo(afterSaleItem.getAfterSaleNo());
+        afterSaleItemPO.setProductId(afterSaleItem.getProductId());
+        afterSaleItemPO.setProductName(afterSaleItem.getProductName());
+        afterSaleItemPO.setProductImage(afterSaleItem.getProductImage());
+        afterSaleItemPO.setQuantity(afterSaleItem.getQuantity());
+        // 使用productPrice代替applyAmount，因为AfterSaleItem类中没有applyAmount方法
+        afterSaleItemPO.setApplyAmount(afterSaleItem.getProductPrice().getAmount());
+        afterSaleItemPO.setCurrency(afterSaleItem.getProductPrice().getCurrency());
+        afterSaleItemPO.setRefundQuantity(afterSaleItem.getRefundQuantity());
+        afterSaleItemPO.setRefundAmount(afterSaleItem.getRefundAmount().getAmount());
+        // 设置默认状态为"PENDING_PROCESS"
+        afterSaleItemPO.setStatus(AfterSaleStatus.PENDING_PROCESS.name());
+        // 设置当前时间为创建和更新时间
+        LocalDateTime now = LocalDateTime.now();
+        afterSaleItemPO.setCreateTime(now);
+        afterSaleItemPO.setUpdateTime(now);
+
+        return afterSaleItemPO;
     }
 
     /**
@@ -53,64 +98,69 @@ public class AfterSaleOrderAssembler {
             return null;
         }
 
-        // 创建空的售后商品项列表
+        // 转换售后商品项
         List<AfterSaleItem> afterSaleItems = new ArrayList<>();
+        if (afterSaleOrderPO.getAfterSaleItems() != null && !afterSaleOrderPO.getAfterSaleItems().isEmpty()) {
+            afterSaleItems = afterSaleOrderPO.getAfterSaleItems().stream()
+                    .map(this::toAfterSaleItem)
+                    .collect(Collectors.toList());
+        }
 
-        // 使用工厂方法创建售后订单
-        AfterSaleOrder afterSaleOrder = AfterSaleOrder.create(
+        // 创建总退款金额对象
+        Price totalRefundAmount = Price.ofCNY(afterSaleOrderPO.getTotalRefundAmount());
+
+        // 使用reconstruct方法创建售后订单对象，替代反射
+        return AfterSaleOrder.reconstruct(
+                afterSaleOrderPO.getId(),
                 afterSaleOrderPO.getAfterSaleNo(),
-                0L, // orderId, 使用默认值
                 afterSaleOrderPO.getOrderNo(),
                 afterSaleOrderPO.getUserId(),
                 AfterSaleType.valueOf(afterSaleOrderPO.getAfterSaleType()),
+                AfterSaleStatus.valueOf(afterSaleOrderPO.getStatus()),
                 afterSaleOrderPO.getReason(),
                 afterSaleOrderPO.getDescription(),
-                null, // images, 使用默认值
-                afterSaleItems,
-                false // adminInitiated, 使用默认值
+                null, // images, 从PO中无法获取
+                false, // adminInitiated, 从PO中无法获取
+                afterSaleOrderPO.getCreateTime(),
+                afterSaleOrderPO.getUpdateTime(),
+                afterSaleOrderPO.getVersion(),
+                afterSaleOrderPO.getCustomerServiceId(),
+                afterSaleOrderPO.getReverseLogisticsNo(),
+                afterSaleOrderPO.getReviewReason(),
+                afterSaleOrderPO.getRefundReason(),
+                totalRefundAmount,
+                afterSaleItems
+        );
+    }
+
+    /**
+     * 售后商品项PO转领域对象
+     */
+    private AfterSaleItem toAfterSaleItem(AfterSaleItemPO afterSaleItemPO) {
+        if (afterSaleItemPO == null) {
+            return null;
+        }
+
+        // 使用applyAmount作为商品价格（因为AfterSaleItemPO中没有productPrice字段）
+        Price productPrice = Price.ofCNY(afterSaleItemPO.getApplyAmount());
+
+        // 创建售后商品项
+        AfterSaleItem item = AfterSaleItem.create(
+                afterSaleItemPO.getProductId(),
+                afterSaleItemPO.getProductName(),
+                afterSaleItemPO.getProductImage(),
+                afterSaleItemPO.getQuantity(),
+                productPrice,
+                afterSaleItemPO.getRefundQuantity()
         );
 
-        // 使用反射设置其他属性
-        try {
-            java.lang.reflect.Field idField = AfterSaleOrder.class.getDeclaredField("id");
-            idField.setAccessible(true);
-            idField.set(afterSaleOrder, afterSaleOrderPO.getId());
-
-            java.lang.reflect.Field afterSaleNoField = AfterSaleOrder.class.getDeclaredField("afterSaleNo");
-            afterSaleNoField.setAccessible(true);
-            afterSaleNoField.set(afterSaleOrder, afterSaleOrderPO.getAfterSaleNo());
-
-            java.lang.reflect.Field statusField = AfterSaleOrder.class.getDeclaredField("status");
-            statusField.setAccessible(true);
-            statusField.set(afterSaleOrder, AfterSaleStatus.valueOf(afterSaleOrderPO.getStatus()));
-
-            java.lang.reflect.Field updateTimeField = AfterSaleOrder.class.getDeclaredField("updateTime");
-            updateTimeField.setAccessible(true);
-            updateTimeField.set(afterSaleOrder, afterSaleOrderPO.getUpdateTime());
-
-            java.lang.reflect.Field versionField = AfterSaleOrder.class.getDeclaredField("version");
-            versionField.setAccessible(true);
-            versionField.set(afterSaleOrder, afterSaleOrderPO.getVersion());
-
-            java.lang.reflect.Field customerServiceIdField = AfterSaleOrder.class.getDeclaredField("customerServiceId");
-            customerServiceIdField.setAccessible(true);
-            customerServiceIdField.set(afterSaleOrder, afterSaleOrderPO.getCustomerServiceId());
-
-            java.lang.reflect.Field reverseLogisticsNoField = AfterSaleOrder.class.getDeclaredField("reverseLogisticsNo");
-            reverseLogisticsNoField.setAccessible(true);
-            reverseLogisticsNoField.set(afterSaleOrder, afterSaleOrderPO.getReverseLogisticsNo());
-
-            java.lang.reflect.Field reviewReasonField = AfterSaleOrder.class.getDeclaredField("reviewReason");
-            reviewReasonField.setAccessible(true);
-            reviewReasonField.set(afterSaleOrder, afterSaleOrderPO.getReviewReason());
-
-            java.lang.reflect.Field refundReasonField = AfterSaleOrder.class.getDeclaredField("refundReason");
-            refundReasonField.setAccessible(true);
-            refundReasonField.set(afterSaleOrder, afterSaleOrderPO.getRefundReason());
-
-            return afterSaleOrder;
-        } catch (Exception e) {
-            throw new RuntimeException("转换售后订单PO为领域对象失败", e);
+        // 设置其他属性
+        item.setId(afterSaleItemPO.getId());
+        item.setAfterSaleNo(afterSaleItemPO.getAfterSaleNo());
+        if (afterSaleItemPO.getRefundAmount() != null) {
+            item.setRefundAmount(Price.ofCNY(afterSaleItemPO.getRefundAmount()));
         }
+
+        return item;
     }
 }

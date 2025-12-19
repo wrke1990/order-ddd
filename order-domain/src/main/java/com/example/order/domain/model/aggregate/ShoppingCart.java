@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.example.order.domain.model.entity.ShoppingCartItem;
 import com.example.order.domain.model.vo.Id;
@@ -18,6 +20,7 @@ public class ShoppingCart implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long id;
+    private String shoppingCartNo;
     private final Long userId;
     private final List<ShoppingCartItem> items;
     private LocalDateTime createTime;
@@ -56,10 +59,19 @@ public class ShoppingCart implements Serializable {
      */
     private ShoppingCart(Long userId) {
         this.userId = userId;
+        this.shoppingCartNo = generateShoppingCartNo(); // 生成唯一的购物车编号
         this.items = new ArrayList<>();
         this.createTime = LocalDateTime.now();
         this.updateTime = LocalDateTime.now();
         this.version = 0;
+    }
+
+    /**
+     * 生成购物车编号
+     */
+    private String generateShoppingCartNo() {
+        // 使用UUID生成唯一编号，实际项目中可以替换为更规范的生成策略
+        return "CART-" + UUID.randomUUID().toString().replace("-", "").substring(0, 20);
     }
 
     /**
@@ -121,7 +133,7 @@ public class ShoppingCart implements Serializable {
         List<Long> productIdValues = productIds.stream()
                 .filter(Objects::nonNull)
                 .map(Id::getValue)
-                .toList();
+                .collect(Collectors.toList());
 
         // 批量删除商品
         items.removeIf(item -> productIdValues.contains(item.getProductId()));
@@ -229,6 +241,14 @@ public class ShoppingCart implements Serializable {
         this.id = id;
     }
 
+    public String getShoppingCartNo() {
+        return shoppingCartNo;
+    }
+
+    public void setShoppingCartNo(String shoppingCartNo) {
+        this.shoppingCartNo = shoppingCartNo;
+    }
+
     public Long getUserId() {
         return userId;
     }
@@ -253,10 +273,42 @@ public class ShoppingCart implements Serializable {
         this.version = version;
     }
 
+    /**
+     * 重建购物车对象，用于从持久化数据重建领域对象
+     * @param id 购物车ID
+     * @param shoppingCartNo 购物车编号
+     * @param userId 用户ID
+     * @param items 购物车项列表
+     * @param createTime 创建时间
+     * @param updateTime 更新时间
+     * @param version 版本号
+     * @return 购物车对象
+     */
+    public static ShoppingCart reconstruct(
+            Long id,
+            String shoppingCartNo,
+            Long userId,
+            List<ShoppingCartItem> items,
+            LocalDateTime createTime,
+            LocalDateTime updateTime,
+            Integer version) {
+        ShoppingCart shoppingCart = new ShoppingCart(userId);
+        shoppingCart.id = id;
+        shoppingCart.shoppingCartNo = shoppingCartNo;
+        if (items != null && !items.isEmpty()) {
+            shoppingCart.items.addAll(items);
+        }
+        shoppingCart.createTime = createTime;
+        shoppingCart.updateTime = updateTime;
+        shoppingCart.version = version;
+        return shoppingCart;
+    }
+
     @Override
     public String toString() {
         return "ShoppingCart{" +
                 "id=" + id +
+                ", shoppingCartNo='" + shoppingCartNo + '\'' +
                 ", userId=" + userId +
                 ", items=" + items +
                 ", createTime=" + createTime +
