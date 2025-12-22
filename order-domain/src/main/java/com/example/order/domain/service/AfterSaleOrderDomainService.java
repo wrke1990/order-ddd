@@ -1,11 +1,11 @@
 package com.example.order.domain.service;
 
+import java.util.List;
+
 import com.example.order.domain.model.aggregate.AfterSaleOrder;
 import com.example.order.domain.model.entity.AfterSaleItem;
 import com.example.order.domain.model.vo.AfterSaleType;
 import com.example.order.domain.model.vo.Price;
-
-import java.util.List;
 
 /**
  * 售后单领域服务接口
@@ -57,19 +57,19 @@ public interface AfterSaleOrderDomainService {
 
     /**
      * 审批通过售后订单
-     * @param afterSaleId 售后单ID
+     * @param afterSaleNo 售后单号
      * @param reason 审批原因
      * @return 审批后的售后订单
      */
-    AfterSaleOrder approveAfterSaleOrder(Long afterSaleId, String reason);
+    AfterSaleOrder approveAfterSaleOrder(String afterSaleNo, String reason);
 
     /**
      * 拒绝售后订单
-     * @param afterSaleId 售后单ID
+     * @param afterSaleNo 售后单号
      * @param reason 拒绝原因
      * @return 拒绝后的售后订单
      */
-    AfterSaleOrder rejectAfterSaleOrder(Long afterSaleId, String reason);
+    AfterSaleOrder rejectAfterSaleOrder(String afterSaleNo, String reason);
 
     /**
      * 提交退货物流

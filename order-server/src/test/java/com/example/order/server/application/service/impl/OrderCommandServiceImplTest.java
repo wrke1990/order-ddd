@@ -18,7 +18,9 @@ import com.example.order.infrastructure.acl.promotion.PromotionClient;
 import com.example.order.infrastructure.acl.user.UserClient;
 import com.example.order.server.application.assember.OrderDtoAssembler;
 import com.example.order.server.application.dto.CreateOrderCommand;
+import com.example.order.server.application.dto.OrderItemCommand;
 import com.example.order.server.application.dto.OrderResponse;
+import com.example.order.server.application.service.OrderCommandService;
 import com.example.order.server.application.service.ProductValidationService;
 import com.example.order.server.application.service.ShoppingCartCommandService;
 import org.junit.jupiter.api.BeforeEach;
@@ -84,8 +86,8 @@ class OrderCommandServiceImplTest {
         createOrderCommand.setAddressId(1001L);
         createOrderCommand.setPaymentMethodId(1L);
 
-        List<CreateOrderCommand.OrderItemCommand> items = new ArrayList<>();
-        CreateOrderCommand.OrderItemCommand item = new CreateOrderCommand.OrderItemCommand();
+        List<OrderItemCommand> items = new ArrayList<>();
+        OrderItemCommand item = new OrderItemCommand();
         item.setProductId(2001L);
         item.setProductName("测试商品");
         item.setQuantity(2);

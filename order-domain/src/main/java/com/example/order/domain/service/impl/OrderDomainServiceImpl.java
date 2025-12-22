@@ -53,9 +53,10 @@ public class OrderDomainServiceImpl implements OrderDomainService {
 
 
     @Override
-    public Order payOrder(String orderNo) {
-        Order order = orderRepository.findByOrderNo(orderNo)
-                .orElseThrow(() -> new BusinessException("订单不存在"));
+    public Order payOrder(Order order) {
+        if (order == null) {
+            throw new BusinessException("订单不能为空");
+        }
         // TODO: 调用支付服务进行支付处理，获取支付单号
         String paymentNo = "PAY" + System.currentTimeMillis(); // 临时生成支付单号
         order.pay(paymentNo);
@@ -63,9 +64,10 @@ public class OrderDomainServiceImpl implements OrderDomainService {
     }
 
     @Override
-    public Order cancelOrder(String orderNo) {
-        Order order = orderRepository.findByOrderNo(orderNo)
-                .orElseThrow(() -> new BusinessException("订单不存在"));
+    public Order cancelOrder(Order order) {
+        if (order == null) {
+            throw new BusinessException("订单不能为空");
+        }
 
         order.cancel();
         Order savedOrder = orderRepository.save(order);
@@ -74,12 +76,11 @@ public class OrderDomainServiceImpl implements OrderDomainService {
         return savedOrder;
     }
 
-
-
     @Override
-    public Order shipOrder(String orderNo) {
-        Order order = orderRepository.findByOrderNo(orderNo)
-                .orElseThrow(() -> new BusinessException("订单不存在"));
+    public Order shipOrder(Order order) {
+        if (order == null) {
+            throw new BusinessException("订单不能为空");
+        }
         // TODO: 调用物流服务生成运单，获取物流公司和运单号
         String logisticsCompany = "顺丰快递"; // 临时使用物流公司
         String trackingNumber = "SF" + System.currentTimeMillis(); // 临时生成运单号
@@ -88,9 +89,22 @@ public class OrderDomainServiceImpl implements OrderDomainService {
     }
 
     @Override
-    public Order completeOrder(String orderNo) {
-        Order order = orderRepository.findByOrderNo(orderNo)
-                .orElseThrow(() -> new BusinessException("订单不存在"));
+    public Order confirmReceipt(Order order) {
+        if (order == null) {
+            throw new BusinessException("订单不能为空");
+        }
+
+        order.confirmReceipt();
+        Order savedOrder = orderRepository.save(order);
+        logger.info("订单已确认收货，订单号: {}", savedOrder.getOrderNo());
+        return savedOrder;
+    }
+
+    @Override
+    public Order completeOrder(Order order) {
+        if (order == null) {
+            throw new BusinessException("订单不能为空");
+        }
 
         order.complete();
         Order savedOrder = orderRepository.save(order);
@@ -99,13 +113,14 @@ public class OrderDomainServiceImpl implements OrderDomainService {
     }
 
     @Override
-    public Order applyCoupon(String orderNo, Id couponId) {
+    public Order applyCoupon(Order order, Id couponId) {
+        if (order == null) {
+            throw new BusinessException("订单不能为空");
+        }
         if (couponId == null) {
             throw new BusinessException("优惠券ID不能为空");
         }
-        logger.info("应用优惠券，订单号: {}, 优惠券ID: {}", orderNo, couponId.getValue());
-        Order order = orderRepository.findByOrderNo(orderNo)
-                .orElseThrow(() -> new BusinessException("订单不存在"));
+        logger.info("应用优惠券，订单号: {}, 优惠券ID: {}", order.getOrderNo(), couponId.getValue());
 
         // 创建优惠券对象（实际项目中应通过优惠券服务获取）
         Coupon coupon = new Coupon(
@@ -125,9 +140,13 @@ public class OrderDomainServiceImpl implements OrderDomainService {
     }
 
     @Override
-    public Order changePaymentMethod(String orderNo, Id paymentMethodId) {
-        Order order = orderRepository.findByOrderNo(orderNo)
-                .orElseThrow(() -> new BusinessException("订单不存在"));
+    public Order changePaymentMethod(Order order, Id paymentMethodId) {
+        if (order == null) {
+            throw new BusinessException("订单不能为空");
+        }
+        if (paymentMethodId == null) {
+            throw new BusinessException("支付方式ID不能为空");
+        }
 
         // 这里需要调用支付服务创建新的支付单和获取支付方式，后续实现
         // TODO: 调用支付服务创建新的支付单和获取支付方式
@@ -142,9 +161,13 @@ public class OrderDomainServiceImpl implements OrderDomainService {
     }
 
     @Override
-    public Order changeAddress(String orderNo, Id addressId) {
-        Order order = orderRepository.findByOrderNo(orderNo)
-                .orElseThrow(() -> new BusinessException("订单不存在"));
+    public Order changeAddress(Order order, Id addressId) {
+        if (order == null) {
+            throw new BusinessException("订单不能为空");
+        }
+        if (addressId == null) {
+            throw new BusinessException("地址ID不能为空");
+        }
 
         // 这里需要调用地址服务获取地址信息，后续实现
         // TODO: 调用地址服务获取地址信息

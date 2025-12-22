@@ -1,10 +1,10 @@
 package com.example.order.server.application.service;
 
+import java.util.List;
+
 import com.example.order.domain.model.vo.OrderStatus;
 import com.example.order.domain.model.vo.Page;
 import com.example.order.server.application.dto.OrderResponse;
-
-import java.util.List;
 
 /**
  * 订单查询服务接口
@@ -15,7 +15,12 @@ public interface OrderQueryService {
     /**
      * 查询订单详情
      */
-    OrderResponse getOrderById(Long orderId);
+    OrderResponse getOrderById(Long orderId, Long userId);
+
+    /**
+     * 根据订单号查询订单详情
+     */
+    OrderResponse getOrderByOrderNo(String orderNo, Long userId);
 
     /**
      * 查询用户订单列表

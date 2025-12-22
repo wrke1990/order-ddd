@@ -5,6 +5,7 @@ import com.example.order.domain.model.entity.OrderItem;
 import com.example.order.domain.model.vo.Id;
 import com.example.order.domain.model.vo.Price;
 import com.example.order.infrastructure.acl.product.dto.ProductDTO;
+import com.example.order.server.application.dto.OrderItemResponse;
 import com.example.order.server.application.dto.OrderResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -77,5 +78,5 @@ public interface OrderDtoAssembler {
             @Mapping(target = "currency", source = "price.currency"),
             @Mapping(target = "totalAmount", source = "totalPrice.amount")
     })
-    OrderResponse.OrderItemResponse toOrderItemResponse(OrderItem orderItem);
+    OrderItemResponse toOrderItemResponse(OrderItem orderItem);
 }

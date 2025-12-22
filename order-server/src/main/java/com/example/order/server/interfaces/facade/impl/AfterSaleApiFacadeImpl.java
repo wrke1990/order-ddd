@@ -42,8 +42,8 @@ public class AfterSaleApiFacadeImpl implements AfterSaleApiFacade {
     }
 
     @Override
-    public CommonResponse<AfterSaleResp> getAfterSale(Long afterSaleId) {
-        AfterSaleOrderResponse response = afterSaleOrderQueryService.getAfterSaleOrderById(afterSaleId);
+    public CommonResponse<AfterSaleResp> getAfterSale(String afterSaleNo) {
+        AfterSaleOrderResponse response = afterSaleOrderQueryService.getAfterSaleOrderByNo(afterSaleNo);
         AfterSaleResp afterSaleResp = afterSaleOrderVoAssembler.toAfterSaleResponse(response);
         return CommonResponse.success(afterSaleResp);
     }
@@ -68,26 +68,26 @@ public class AfterSaleApiFacadeImpl implements AfterSaleApiFacade {
     }
 
     @Override
-    public CommonResponse<Void> cancelAfterSale(Long afterSaleId) {
-        afterSaleOrderCommandService.cancelAfterSaleOrder(afterSaleId);
+    public CommonResponse<Void> cancelAfterSale(String afterSaleNo) {
+        afterSaleOrderCommandService.cancelAfterSaleOrder(afterSaleNo);
         return CommonResponse.success();
     }
 
     @Override
-    public CommonResponse<Void> approveAfterSale(Long afterSaleId, String reason) {
-        afterSaleOrderCommandService.approveAfterSaleOrder(afterSaleId, reason);
+    public CommonResponse<Void> approveAfterSale(String afterSaleNo, String reason) {
+        afterSaleOrderCommandService.approveAfterSaleOrder(afterSaleNo, reason);
         return CommonResponse.success();
     }
 
     @Override
-    public CommonResponse<Void> rejectAfterSale(Long afterSaleId, String reason) {
-        afterSaleOrderCommandService.rejectAfterSaleOrder(afterSaleId, reason);
+    public CommonResponse<Void> rejectAfterSale(String afterSaleNo, String reason) {
+        afterSaleOrderCommandService.rejectAfterSaleOrder(afterSaleNo, reason);
         return CommonResponse.success();
     }
 
     @Override
-    public CommonResponse<Void> completeRefund(Long afterSaleId, Double refundAmount) {
-        afterSaleOrderCommandService.completeRefund(afterSaleId, refundAmount);
+    public CommonResponse<Void> completeRefund(String afterSaleNo, Double refundAmount) {
+        afterSaleOrderCommandService.completeRefund(afterSaleNo, refundAmount);
         return CommonResponse.success();
     }
 

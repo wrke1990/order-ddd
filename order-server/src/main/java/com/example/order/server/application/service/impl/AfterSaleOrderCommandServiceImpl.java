@@ -89,12 +89,12 @@ public class AfterSaleOrderCommandServiceImpl implements AfterSaleOrderCommandSe
 
     @Override
     @Transactional
-    public AfterSaleOrderResponse cancelAfterSaleOrder(Long afterSaleId) {
-        log.info("取消售后订单，售后ID: {}", afterSaleId);
+    public AfterSaleOrderResponse cancelAfterSaleOrder(String afterSaleNo) {
+        log.info("取消售后订单，售后单号: {}", afterSaleNo);
 
         // 查找售后订单
-        AfterSaleOrder afterSaleOrder = afterSaleOrderRepository.findById(afterSaleId)
-                .orElseThrow(() -> new BusinessException("售后订单不存在: " + afterSaleId));
+        AfterSaleOrder afterSaleOrder = afterSaleOrderRepository.findByAfterSaleNo(afterSaleNo)
+                .orElseThrow(() -> new BusinessException("售后订单不存在: " + afterSaleNo));
 
         // 执行取消操作（在聚合根内部实现业务规则）
         afterSaleOrder.cancel();
@@ -110,12 +110,12 @@ public class AfterSaleOrderCommandServiceImpl implements AfterSaleOrderCommandSe
 
     @Override
     @Transactional
-    public AfterSaleOrderResponse approveAfterSaleOrder(Long afterSaleId, String reason) {
-        log.info("审批通过售后订单，售后ID: {}, 原因: {}", afterSaleId, reason);
+    public AfterSaleOrderResponse approveAfterSaleOrder(String afterSaleNo, String reason) {
+        log.info("审批通过售后订单，售后单号: {}, 原因: {}", afterSaleNo, reason);
 
         // 查找售后订单
-        AfterSaleOrder afterSaleOrder = afterSaleOrderRepository.findById(afterSaleId)
-                .orElseThrow(() -> new BusinessException("售后订单不存在: " + afterSaleId));
+        AfterSaleOrder afterSaleOrder = afterSaleOrderRepository.findByAfterSaleNo(afterSaleNo)
+                .orElseThrow(() -> new BusinessException("售后订单不存在: " + afterSaleNo));
 
         // 执行审批通过操作
         afterSaleOrder.approve(reason);
@@ -131,12 +131,12 @@ public class AfterSaleOrderCommandServiceImpl implements AfterSaleOrderCommandSe
 
     @Override
     @Transactional
-    public AfterSaleOrderResponse rejectAfterSaleOrder(Long afterSaleId, String reason) {
-        log.info("拒绝售后订单，售后ID: {}, 原因: {}", afterSaleId, reason);
+    public AfterSaleOrderResponse rejectAfterSaleOrder(String afterSaleNo, String reason) {
+        log.info("拒绝售后订单，售后单号: {}, 原因: {}", afterSaleNo, reason);
 
         // 查找售后订单
-        AfterSaleOrder afterSaleOrder = afterSaleOrderRepository.findById(afterSaleId)
-                .orElseThrow(() -> new BusinessException("售后订单不存在: " + afterSaleId));
+        AfterSaleOrder afterSaleOrder = afterSaleOrderRepository.findByAfterSaleNo(afterSaleNo)
+                .orElseThrow(() -> new BusinessException("售后订单不存在: " + afterSaleNo));
 
         // 执行拒绝操作
         afterSaleOrder.reject(reason);
@@ -152,12 +152,12 @@ public class AfterSaleOrderCommandServiceImpl implements AfterSaleOrderCommandSe
 
     @Override
     @Transactional
-    public AfterSaleOrderResponse completeRefund(Long afterSaleId, Double refundAmount) {
-        log.info("完成售后退款，售后ID: {}, 退款金额: {}", afterSaleId, refundAmount);
+    public AfterSaleOrderResponse completeRefund(String afterSaleNo, Double refundAmount) {
+        log.info("完成售后退款，售后单号: {}, 退款金额: {}", afterSaleNo, refundAmount);
 
         // 查找售后订单
-        AfterSaleOrder afterSaleOrder = afterSaleOrderRepository.findById(afterSaleId)
-                .orElseThrow(() -> new BusinessException("售后订单不存在: " + afterSaleId));
+        AfterSaleOrder afterSaleOrder = afterSaleOrderRepository.findByAfterSaleNo(afterSaleNo)
+                .orElseThrow(() -> new BusinessException("售后订单不存在: " + afterSaleNo));
 
         // 执行退款完成操作
         afterSaleOrder.confirmRefund(new Price(refundAmount.longValue(), "CNY"));

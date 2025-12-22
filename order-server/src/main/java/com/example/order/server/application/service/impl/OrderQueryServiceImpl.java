@@ -1,5 +1,13 @@
 package com.example.order.server.application.service.impl;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+
 import com.example.order.domain.model.aggregate.Order;
 import com.example.order.domain.model.vo.Id;
 import com.example.order.domain.model.vo.OrderStatus;
@@ -8,13 +16,6 @@ import com.example.order.domain.repository.OrderRepository;
 import com.example.order.server.application.assember.OrderDtoAssembler;
 import com.example.order.server.application.dto.OrderResponse;
 import com.example.order.server.application.service.OrderQueryService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 订单查询服务实现类
@@ -34,12 +35,30 @@ public class OrderQueryServiceImpl implements OrderQueryService {
     }
 
     @Override
-    @Cacheable(value = "orders", key = "#orderId")
-    public OrderResponse getOrderById(Long orderId) {
-        logger.info("查询订单详情，订单ID: {}", orderId);
-        // 直接调用repository查询
-        Order order = orderRepository.findById(Id.of(orderId))
-                .orElseThrow(() -> new RuntimeException("订单不存在"));
+    @Cacheable(value = "orders", key = "#orderId + '-' + #userId")
+    public OrderResponse getOrderById(Long orderId, Long userId) {
+        logger.info("查询订单详情，订单ID: {}, 用户ID: {}", orderId, userId);
+
+        // 统一使用findByUserIdAndId方法查询订单，内部已处理管理员和普通用户的权限逻辑
+        Order order = orderRepository.findByUserIdAndId(
+                userId != null ? Id.of(userId) : null,
+                Id.of(orderId)
+        ).orElseThrow(() -> new RuntimeException("订单不存在"));
+
+        return orderDtoAssembler.toOrderResponse(order);
+    }
+
+    @Override
+    @Cacheable(value = "ordersByOrderNo", key = "#orderNo + '-' + #userId")
+    public OrderResponse getOrderByOrderNo(String orderNo, Long userId) {
+        logger.info("根据订单号查询订单详情，订单号: {}, 用户ID: {}", orderNo, userId);
+
+        // 使用findByUserIdAndOrderNo方法查询订单，内部已处理管理员和普通用户的权限逻辑
+        Order order = orderRepository.findByUserIdAndOrderNo(
+                userId != null ? Id.of(userId) : null,
+                orderNo
+        ).orElseThrow(() -> new RuntimeException("订单不存在"));
+
         return orderDtoAssembler.toOrderResponse(order);
     }
 

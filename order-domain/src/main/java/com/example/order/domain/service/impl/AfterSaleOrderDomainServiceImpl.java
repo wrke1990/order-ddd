@@ -1,5 +1,11 @@
 package com.example.order.domain.service.impl;
 
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
 import com.example.order.common.exception.BusinessException;
 import com.example.order.domain.model.aggregate.AfterSaleOrder;
 import com.example.order.domain.model.aggregate.Order;
@@ -12,11 +18,6 @@ import com.example.order.domain.model.vo.Price;
 import com.example.order.domain.repository.AfterSaleOrderRepository;
 import com.example.order.domain.repository.OrderRepository;
 import com.example.order.domain.service.AfterSaleOrderDomainService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class AfterSaleOrderDomainServiceImpl implements AfterSaleOrderDomainService {
@@ -41,7 +42,7 @@ public class AfterSaleOrderDomainServiceImpl implements AfterSaleOrderDomainServ
         }
 
         // 验证订单是否存在
-        Order order = orderRepository.findByOrderNo(afterSaleOrder.getOrderNo())
+        Order order = orderRepository.findByUserIdAndOrderNo(com.example.order.domain.model.vo.Id.of(afterSaleOrder.getUserId()), afterSaleOrder.getOrderNo())
                 .orElseThrow(() -> new BusinessException("订单不存在"));
 
         // 保存售后单
@@ -59,7 +60,7 @@ public class AfterSaleOrderDomainServiceImpl implements AfterSaleOrderDomainServ
                 orderNo, type, afterSaleItems != null ? afterSaleItems.size() : 0);
 
         // 验证订单是否存在
-        Order order = orderRepository.findByOrderNo(orderNo)
+        Order order = orderRepository.findByUserIdAndOrderNo(com.example.order.domain.model.vo.Id.of(userId), orderNo)
                 .orElseThrow(() -> new BusinessException("订单不存在"));
 
         // 验证订单状态是否允许申请售后
@@ -86,7 +87,7 @@ public class AfterSaleOrderDomainServiceImpl implements AfterSaleOrderDomainServ
                 orderNo, afterSaleItems != null ? afterSaleItems.size() : 0);
 
         // 验证订单是否存在
-        Order order = orderRepository.findByOrderNo(orderNo)
+        Order order = orderRepository.findByUserIdAndOrderNo(com.example.order.domain.model.vo.Id.of(userId), orderNo)
                 .orElseThrow(() -> new BusinessException("订单不存在"));
 
         // 验证订单状态是否允许申请售后
@@ -124,11 +125,10 @@ public class AfterSaleOrderDomainServiceImpl implements AfterSaleOrderDomainServ
     }
 
     @Override
-    public AfterSaleOrder approveAfterSaleOrder(Long afterSaleId, String reason) {
-        logger.info("审批通过售后单，售后ID: {}, 原因: {}", afterSaleId, reason);
+    public AfterSaleOrder approveAfterSaleOrder(String afterSaleNo, String reason) {
+        logger.info("审批通过售后单，售后单号: {}, 原因: {}", afterSaleNo, reason);
 
-        validateAfterSaleId(afterSaleId);
-        AfterSaleOrder afterSaleOrder = afterSaleOrderRepository.findById(afterSaleId)
+        AfterSaleOrder afterSaleOrder = afterSaleOrderRepository.findByAfterSaleNo(afterSaleNo)
                 .orElseThrow(() -> new BusinessException("售后单不存在"));
 
         afterSaleOrder.approve(reason);
@@ -137,7 +137,7 @@ public class AfterSaleOrderDomainServiceImpl implements AfterSaleOrderDomainServ
 
         // 如果是退货退款类型，将原订单标记为售后中
         if (updatedAfterSaleOrder.getType() == AfterSaleType.REFUND_WITH_RETURN) {
-            Order order = orderRepository.findByOrderNo(updatedAfterSaleOrder.getOrderNo())
+            Order order = orderRepository.findByUserIdAndOrderNo(com.example.order.domain.model.vo.Id.of(updatedAfterSaleOrder.getUserId()), updatedAfterSaleOrder.getOrderNo())
                     .orElseThrow(() -> new BusinessException("原订单不存在"));
             order.setStatus(OrderStatus.AFTER_SALES_PROCESSING);
             orderRepository.save(order);
@@ -150,11 +150,10 @@ public class AfterSaleOrderDomainServiceImpl implements AfterSaleOrderDomainServ
     }
 
     @Override
-    public AfterSaleOrder rejectAfterSaleOrder(Long afterSaleId, String reason) {
-        logger.info("拒绝售后单，售后ID: {}, 原因: {}", afterSaleId, reason);
+    public AfterSaleOrder rejectAfterSaleOrder(String afterSaleNo, String reason) {
+        logger.info("拒绝售后单，售后单号: {}, 原因: {}", afterSaleNo, reason);
 
-        validateAfterSaleId(afterSaleId);
-        AfterSaleOrder afterSaleOrder = afterSaleOrderRepository.findById(afterSaleId)
+        AfterSaleOrder afterSaleOrder = afterSaleOrderRepository.findByAfterSaleNo(afterSaleNo)
                 .orElseThrow(() -> new BusinessException("售后单不存在"));
 
         afterSaleOrder.reject(reason);
@@ -250,17 +249,12 @@ public class AfterSaleOrderDomainServiceImpl implements AfterSaleOrderDomainServ
         }
     }
 
-    // 辅助方法：验证售后ID
-    private void validateAfterSaleId(Long afterSaleId) {
-        if (afterSaleId == null || afterSaleId <= 0) {
-            throw new BusinessException("售后单ID无效");
-        }
-    }
+
 
     // 辅助方法：退款后更新原订单状态
     private void updateOrderStatusAfterRefund(AfterSaleOrder afterSaleOrder) {
         // 获取原订单
-        Order order = orderRepository.findByOrderNo(afterSaleOrder.getOrderNo())
+        Order order = orderRepository.findByUserIdAndOrderNo(com.example.order.domain.model.vo.Id.of(afterSaleOrder.getUserId()), afterSaleOrder.getOrderNo())
                 .orElseThrow(() -> new BusinessException("原订单不存在"));
 
         // 标记订单项为已退款和已退货
@@ -304,8 +298,8 @@ public class AfterSaleOrderDomainServiceImpl implements AfterSaleOrderDomainServ
         }
 
         // 如果订单还有未处理的售后，则标记为售后中
-        List<AfterSaleOrder> afterSaleOrders = afterSaleOrderRepository.findByOrderNo(order.getOrderNo());
-        boolean hasPendingAfterSale = afterSaleOrders.stream()
+        List<AfterSaleOrder> existingAfterSaleOrders = afterSaleOrderRepository.findByUserIdAndOrderNo(order.getUserId().getValue(), order.getOrderNo());
+        boolean hasPendingAfterSale = existingAfterSaleOrders.stream()
                 .anyMatch(afterSale -> afterSale.getStatus() != AfterSaleStatus.COMPLETED &&
                                     afterSale.getStatus() != AfterSaleStatus.REJECTED);
 

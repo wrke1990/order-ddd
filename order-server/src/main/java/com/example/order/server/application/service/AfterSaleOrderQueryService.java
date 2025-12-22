@@ -14,10 +14,7 @@ public interface AfterSaleOrderQueryService {
      */
     AfterSaleOrderResponse getAfterSaleOrderByNo(String afterSaleNo);
 
-    /**
-     * 根据售后单ID获取售后订单
-     */
-    AfterSaleOrderResponse getAfterSaleOrderById(Long afterSaleId);
+
 
     /**
      * 根据用户ID获取售后订单列表

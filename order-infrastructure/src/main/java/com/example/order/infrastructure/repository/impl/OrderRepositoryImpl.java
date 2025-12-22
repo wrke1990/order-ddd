@@ -1,5 +1,13 @@
 package com.example.order.infrastructure.repository.impl;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Repository;
+
 import com.example.order.domain.model.aggregate.Order;
 import com.example.order.domain.model.event.DomainEventPublisher;
 import com.example.order.domain.model.vo.Id;
@@ -9,13 +17,6 @@ import com.example.order.domain.repository.OrderRepository;
 import com.example.order.infrastructure.assember.OrderAssembler;
 import com.example.order.infrastructure.persistence.po.OrderPO;
 import com.example.order.infrastructure.persistence.repository.JpaOrderRepository;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Repository;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * 订单仓储实现
@@ -47,15 +48,22 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
-    public Optional<Order> findById(Id orderId) {
-        return jpaOrderRepository.findById(orderId.getValue())
+    public Optional<Order> findByUserIdAndOrderNo(Id userId, String orderNo) {
+        return jpaOrderRepository.findByUserIdAndOrderNo(userId.getValue(), orderNo)
                 .map(orderAssembler::toOrder);
     }
 
     @Override
-    public Optional<Order> findByOrderNo(String orderNo) {
-        return jpaOrderRepository.findByOrderNo(orderNo)
-                .map(orderAssembler::toOrder);
+    public Optional<Order> findByUserIdAndId(Id userId, Id orderId) {
+        if (userId == null) {
+            // 管理员操作，直接根据订单ID查询
+            return jpaOrderRepository.findById(orderId.getValue())
+                    .map(orderAssembler::toOrder);
+        } else {
+            // 普通用户，需要同时验证用户ID和订单ID
+            return jpaOrderRepository.findByUserIdAndId(userId.getValue(), orderId.getValue())
+                    .map(orderAssembler::toOrder);
+        }
     }
 
     @Override

@@ -1,14 +1,15 @@
 package com.example.order.infrastructure.persistence.repository;
 
-import com.example.order.infrastructure.persistence.po.OrderPO;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import com.example.order.infrastructure.persistence.po.OrderPO;
 
 /**
  * Spring Data JPA订单仓库接口
@@ -20,6 +21,16 @@ public interface JpaOrderRepository extends JpaRepository<OrderPO, Long> {
      * 根据订单号查询订单
      */
     Optional<OrderPO> findByOrderNo(String orderNo);
+
+    /**
+     * 根据用户ID和订单号查询订单
+     */
+    Optional<OrderPO> findByUserIdAndOrderNo(Long userId, String orderNo);
+
+    /**
+     * 根据用户ID和订单ID查询订单
+     */
+    Optional<OrderPO> findByUserIdAndId(Long userId, Long orderId);
 
     /**
      * 根据用户ID查询订单列表

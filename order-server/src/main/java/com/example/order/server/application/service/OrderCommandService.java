@@ -18,40 +18,40 @@ public interface OrderCommandService {
     /**
      * 支付订单
      */
-    void payOrder(Id orderId);
+    void payOrder(String orderNo, Id userId);
 
     /**
      * 取消订单
      */
-    void cancelOrder(Id orderId);
+    void cancelOrder(String orderNo, Id userId);
 
     /**
      * 发货
      */
-    void shipOrder(Id orderId);
+    void shipOrder(String orderNo, Id userId);
 
     /**
      * 确认收货
      */
-    void confirmReceipt(Id orderId);
+    void confirmReceipt(String orderNo, Id userId);
 
     /**
      * 修改订单地址（仅未发货时可修改）
      */
-    void changeShippingAddress(Id orderId, Id addressId);
+    void changeShippingAddress(String orderNo, Id addressId, Id userId);
 
     /**
      * 修改支付方式（仅未支付时可修改）
      */
-    void changePaymentMethod(Id orderId, Id paymentMethodId);
+    void changePaymentMethod(String orderNo, Id paymentMethodId, Id userId);
 
     /**
      * 应用优惠券
      */
-    void applyCoupon(Id orderId, Id couponId);
+    void applyCoupon(String orderNo, Id couponId, Id userId);
 
     /**
      * 完成订单
      */
-    void completeOrder(Id orderId);
+    void completeOrder(String orderNo, Id userId);
 }

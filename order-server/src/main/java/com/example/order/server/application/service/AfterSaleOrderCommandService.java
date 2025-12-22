@@ -16,20 +16,20 @@ public interface AfterSaleOrderCommandService {
     /**
      * 取消售后订单
      */
-    AfterSaleOrderResponse cancelAfterSaleOrder(Long afterSaleId);
+    AfterSaleOrderResponse cancelAfterSaleOrder(String afterSaleNo);
 
     /**
      * 审核售后订单
      */
-    AfterSaleOrderResponse approveAfterSaleOrder(Long afterSaleId, String reason);
+    AfterSaleOrderResponse approveAfterSaleOrder(String afterSaleNo, String reason);
 
     /**
      * 拒绝售后订单
      */
-    AfterSaleOrderResponse rejectAfterSaleOrder(Long afterSaleId, String reason);
+    AfterSaleOrderResponse rejectAfterSaleOrder(String afterSaleNo, String reason);
 
     /**
      * 完成售后退款
      */
-    AfterSaleOrderResponse completeRefund(Long afterSaleId, Double refundAmount);
+    AfterSaleOrderResponse completeRefund(String afterSaleNo, Double refundAmount);
 }

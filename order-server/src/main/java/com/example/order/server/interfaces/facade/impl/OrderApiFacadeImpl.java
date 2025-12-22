@@ -1,5 +1,10 @@
 package com.example.order.server.interfaces.facade.impl;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
 import com.example.order.api.facade.OrderApiFacade;
 import com.example.order.api.vo.req.CreateOrderReq;
 import com.example.order.api.vo.req.OrderStatusEnum;
@@ -13,10 +18,6 @@ import com.example.order.server.application.dto.CreateOrderCommand;
 import com.example.order.server.application.dto.OrderResponse;
 import com.example.order.server.application.service.OrderCommandService;
 import com.example.order.server.application.service.OrderQueryService;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 订单API接口实现
@@ -43,8 +44,8 @@ public class OrderApiFacadeImpl implements OrderApiFacade {
     }
 
     @Override
-    public CommonResponse<OrderResp> getOrder(Long orderId) {
-        OrderResponse response = orderQueryService.getOrderById(orderId);
+    public CommonResponse<OrderResp> getOrder(String orderNo, Long userId) {
+        OrderResponse response = orderQueryService.getOrderByOrderNo(orderNo, userId);
         OrderResp orderResp = orderVoAssembler.toOrderResponse(response);
         return CommonResponse.success(orderResp);
     }
@@ -81,44 +82,44 @@ public class OrderApiFacadeImpl implements OrderApiFacade {
     }
 
     @Override
-    public CommonResponse<Void> payOrder(Long orderId) {
-        orderCommandService.payOrder(Id.of(orderId));
+    public CommonResponse<Void> payOrder(String orderNo, Long userId) {
+        orderCommandService.payOrder(orderNo, Id.of(userId));
         return CommonResponse.success();
     }
 
     @Override
-    public CommonResponse<Void> cancelOrder(Long orderId) {
-        orderCommandService.cancelOrder(Id.of(orderId));
+    public CommonResponse<Void> cancelOrder(String orderNo, Long userId) {
+        orderCommandService.cancelOrder(orderNo, Id.of(userId));
         return CommonResponse.success();
     }
 
     @Override
-    public CommonResponse<Void> shipOrder(Long orderId) {
-        orderCommandService.shipOrder(Id.of(orderId));
+    public CommonResponse<Void> shipOrder(String orderNo, Long userId) {
+        orderCommandService.shipOrder(orderNo, Id.of(userId));
         return CommonResponse.success();
     }
 
     @Override
-    public CommonResponse<Void> confirmReceipt(Long orderId) {
-        orderCommandService.confirmReceipt(Id.of(orderId));
+    public CommonResponse<Void> confirmReceipt(String orderNo, Long userId) {
+        orderCommandService.confirmReceipt(orderNo, Id.of(userId));
         return CommonResponse.success();
     }
 
     @Override
-    public CommonResponse<Void> completeOrder(Long orderId) {
-        orderCommandService.completeOrder(Id.of(orderId));
+    public CommonResponse<Void> completeOrder(String orderNo, Long userId) {
+        orderCommandService.completeOrder(orderNo, Id.of(userId));
         return CommonResponse.success();
     }
 
     @Override
-    public CommonResponse<Void> changeShippingAddress(Long orderId, Long addressId) {
-        orderCommandService.changeShippingAddress(Id.of(orderId), Id.of(addressId));
+    public CommonResponse<Void> changeShippingAddress(String orderNo, Long addressId, Long userId) {
+        orderCommandService.changeShippingAddress(orderNo, Id.of(addressId), Id.of(userId));
         return CommonResponse.success();
     }
 
     @Override
-    public CommonResponse<Void> changePaymentMethod(Long orderId, Long paymentMethodId) {
-        orderCommandService.changePaymentMethod(Id.of(orderId), Id.of(paymentMethodId));
+    public CommonResponse<Void> changePaymentMethod(String orderNo, Long paymentMethodId, Long userId) {
+        orderCommandService.changePaymentMethod(orderNo, Id.of(paymentMethodId), Id.of(userId));
         return CommonResponse.success();
     }
 

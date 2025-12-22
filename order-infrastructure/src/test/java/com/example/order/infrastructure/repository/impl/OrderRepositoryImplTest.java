@@ -81,30 +81,36 @@ public class OrderRepositoryImplTest {
     }
 
     @Test
-    public void testFindById() {
-        // 调用findById方法
-        Optional<Order> orderOptional = orderRepository.findById(Id.of(1L));
+    public void testFindByUserIdAndId() {
+        // 设置mock行为
+        lenient().when(jpaOrderRepository.findByUserIdAndId(1L, 1L)).thenReturn(Optional.of(testOrderPO));
+        
+        // 调用findByUserIdAndId方法
+        Optional<Order> orderOptional = orderRepository.findByUserIdAndId(Id.of(1L), Id.of(1L));
 
         // 验证结果
         Assertions.assertTrue(orderOptional.isPresent());
         Assertions.assertEquals(testOrder.getId(), orderOptional.get().getId());
 
         // 验证mock调用
-        verify(jpaOrderRepository, times(1)).findById(1L);
+        verify(jpaOrderRepository, times(1)).findByUserIdAndId(1L, 1L);
         verify(orderAssembler, times(1)).toOrder(testOrderPO);
     }
 
     @Test
-    public void testFindByOrderNo() {
-        // 调用findByOrderNo方法
-        Optional<Order> orderOptional = orderRepository.findByOrderNo("ORDER-001");
+    public void testFindByUserIdAndOrderNo() {
+        // 设置mock行为
+        lenient().when(jpaOrderRepository.findByUserIdAndOrderNo(1L, "ORDER-001")).thenReturn(Optional.of(testOrderPO));
+        
+        // 调用findByUserIdAndOrderNo方法
+        Optional<Order> orderOptional = orderRepository.findByUserIdAndOrderNo(Id.of(1L), "ORDER-001");
 
         // 验证结果
         Assertions.assertTrue(orderOptional.isPresent());
         Assertions.assertEquals(testOrder.getOrderNo(), orderOptional.get().getOrderNo());
 
         // 验证mock调用
-        verify(jpaOrderRepository, times(1)).findByOrderNo("ORDER-001");
+        verify(jpaOrderRepository, times(1)).findByUserIdAndOrderNo(1L, "ORDER-001");
         verify(orderAssembler, times(1)).toOrder(testOrderPO);
     }
 

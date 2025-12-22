@@ -19,7 +19,7 @@ public interface OrderApiFacade {
     /**
      * 查询订单详情
      */
-    CommonResponse<OrderResp> getOrder(Long orderId);
+    CommonResponse<OrderResp> getOrder(String orderNo, Long userId);
 
     /**
      * 查询用户订单列表
@@ -34,36 +34,36 @@ public interface OrderApiFacade {
     /**
      * 支付订单
      */
-    CommonResponse<Void> payOrder(Long orderId);
+    CommonResponse<Void> payOrder(String orderNo, Long userId);
 
     /**
      * 取消订单
      */
-    CommonResponse<Void> cancelOrder(Long orderId);
+    CommonResponse<Void> cancelOrder(String orderNo, Long userId);
 
     /**
      * 发货
      */
-    CommonResponse<Void> shipOrder(Long orderId);
+    CommonResponse<Void> shipOrder(String orderNo, Long userId);
 
     /**
      * 确认收货
      */
-    CommonResponse<Void> confirmReceipt(Long orderId);
+    CommonResponse<Void> confirmReceipt(String orderNo, Long userId);
 
     /**
      * 完成订单
      */
-    CommonResponse<Void> completeOrder(Long orderId);
+    CommonResponse<Void> completeOrder(String orderNo, Long userId);
 
     /**
      * 修改配送地址
      */
-    CommonResponse<Void> changeShippingAddress(Long orderId, Long addressId);
+    CommonResponse<Void> changeShippingAddress(String orderNo, Long addressId, Long userId);
 
     /**
      * 修改支付方式
      */
-    CommonResponse<Void> changePaymentMethod(Long orderId, Long paymentMethodId);
+    CommonResponse<Void> changePaymentMethod(String orderNo, Long paymentMethodId, Long userId);
 
 }

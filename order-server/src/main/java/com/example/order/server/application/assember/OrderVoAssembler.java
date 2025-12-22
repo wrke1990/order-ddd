@@ -1,21 +1,23 @@
 package com.example.order.server.application.assember;
 
-import com.example.order.api.vo.req.CreateOrderReq;
-import com.example.order.api.vo.resp.OrderResp;
-import com.example.order.server.application.dto.CreateOrderCommand;
-import com.example.order.server.application.dto.OrderResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
-import org.mapstruct.factory.Mappers;
+
+import com.example.order.api.vo.req.CreateOrderReq;
+import com.example.order.api.vo.req.OrderItemReq;
+import com.example.order.api.vo.resp.OrderItemResp;
+import com.example.order.api.vo.resp.OrderResp;
+import com.example.order.server.application.dto.CreateOrderCommand;
+import com.example.order.server.application.dto.OrderItemCommand;
+import com.example.order.server.application.dto.OrderItemResponse;
+import com.example.order.server.application.dto.OrderResponse;
 
 /**
  * 订单VO与应用服务DTO转换器
  */
 @Mapper(componentModel = "spring")
 public interface OrderVoAssembler {
-
-    OrderVoAssembler INSTANCE = Mappers.getMapper(OrderVoAssembler.class);
 
     /**
      * API请求VO转应用服务DTO
@@ -35,7 +37,7 @@ public interface OrderVoAssembler {
     @Mapping(target = "price", source = "price")
     @Mapping(target = "currency", source = "currency")
     @Mapping(target = "quantity", source = "quantity")
-    CreateOrderCommand.OrderItemCommand toOrderItemCommand(CreateOrderReq.OrderItemReq itemReq);
+    OrderItemCommand toOrderItemCommand(OrderItemReq itemReq);
 
     /**
      * 应用服务响应DTO转API响应VO
@@ -63,5 +65,5 @@ public interface OrderVoAssembler {
             @Mapping(target = "quantity", source = "quantity"),
             @Mapping(target = "totalPrice", source = "totalAmount")
     })
-    OrderResp.OrderItemResp toOrderItemResponse(OrderResponse.OrderItemResponse itemResp);
+    OrderItemResp toOrderItemResponse(OrderItemResponse itemResp);
 }

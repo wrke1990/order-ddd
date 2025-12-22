@@ -1,13 +1,16 @@
 package com.example.order.server.interfaces.facade.impl;
 
+import org.springframework.stereotype.Service;
+
 import com.example.order.admin.facade.OrderAdminFacade;
 import com.example.order.admin.vo.req.OrderQueryReq;
 import com.example.order.admin.vo.resp.OrderResp;
 import com.example.order.common.response.CommonResponse;
 import com.example.order.common.response.PageResponse;
 import com.example.order.domain.model.vo.Id;
+import com.example.order.server.application.dto.OrderResponse;
 import com.example.order.server.application.service.OrderCommandService;
-import org.springframework.stereotype.Service;
+import com.example.order.server.application.service.OrderQueryService;
 
 /**
  * 订单管理后台接口实现
@@ -16,9 +19,11 @@ import org.springframework.stereotype.Service;
 public class OrderAdminFacadeImpl implements OrderAdminFacade {
 
     private final OrderCommandService orderCommandService;
+    private final OrderQueryService orderQueryService;
 
-    public OrderAdminFacadeImpl(OrderCommandService orderCommandService) {
+    public OrderAdminFacadeImpl(OrderCommandService orderCommandService, OrderQueryService orderQueryService) {
         this.orderCommandService = orderCommandService;
+        this.orderQueryService = orderQueryService;
     }
 
     @Override
@@ -35,19 +40,25 @@ public class OrderAdminFacadeImpl implements OrderAdminFacade {
 
     @Override
     public CommonResponse<Void> shipOrder(Long orderId) {
-        orderCommandService.shipOrder(Id.of(orderId));
+        // 管理员操作，先查询订单获取userId
+        OrderResponse order = orderQueryService.getOrderById(orderId, null);
+        orderCommandService.shipOrder(String.valueOf(orderId), Id.of(order.getUserId()));
         return CommonResponse.success();
     }
 
     @Override
     public CommonResponse<Void> completeOrder(Long orderId) {
-        orderCommandService.completeOrder(Id.of(orderId));
+        // 管理员操作，先查询订单获取userId
+        OrderResponse order = orderQueryService.getOrderById(orderId, null);
+        orderCommandService.completeOrder(String.valueOf(orderId), Id.of(order.getUserId()));
         return CommonResponse.success();
     }
 
     @Override
     public CommonResponse<Void> cancelOrder(Long orderId) {
-        orderCommandService.cancelOrder(Id.of(orderId));
+        // 管理员操作，先查询订单获取userId
+        OrderResponse order = orderQueryService.getOrderById(orderId, null);
+        orderCommandService.cancelOrder(String.valueOf(orderId), Id.of(order.getUserId()));
         return CommonResponse.success();
     }
 }

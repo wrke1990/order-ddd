@@ -1,16 +1,24 @@
 package com.example.order.server.interfaces.rest;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.example.order.common.response.CommonResponse;
 import com.example.order.domain.model.vo.Id;
 import com.example.order.server.application.dto.CreateOrderCommand;
 import com.example.order.server.application.dto.OrderResponse;
 import com.example.order.server.application.service.OrderCommandService;
 import com.example.order.server.application.service.OrderQueryService;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
 
 /**
  * 订单REST控制器
@@ -41,8 +49,8 @@ public class OrderController {
      * 查询订单详情
      */
     @GetMapping("/{orderId}")
-    public CommonResponse<OrderResponse> getOrderById(@PathVariable @Min(1) Long orderId) {
-        OrderResponse response = orderQueryService.getOrderById(orderId);
+    public CommonResponse<OrderResponse> getOrderById(@PathVariable @Min(1) Long orderId, @RequestParam Long userId) {
+        OrderResponse response = orderQueryService.getOrderById(orderId, userId);
         return CommonResponse.success(response);
     }
 
@@ -50,8 +58,8 @@ public class OrderController {
      * 支付订单
      */
     @PutMapping("/{orderId}/pay")
-    public CommonResponse<Void> payOrder(@PathVariable @Min(1) Long orderId) {
-        orderCommandService.payOrder(Id.of(orderId));
+    public CommonResponse<Void> payOrder(@PathVariable @Min(1) Long orderId, @RequestParam Long userId) {
+        orderCommandService.payOrder(String.valueOf(orderId), Id.of(userId));
         return CommonResponse.success();
     }
 
@@ -59,8 +67,8 @@ public class OrderController {
      * 取消订单
      */
     @PutMapping("/{orderId}/cancel")
-    public CommonResponse<Void> cancelOrder(@PathVariable @Min(1) Long orderId) {
-        orderCommandService.cancelOrder(Id.of(orderId));
+    public CommonResponse<Void> cancelOrder(@PathVariable @Min(1) Long orderId, @RequestParam Long userId) {
+        orderCommandService.cancelOrder(String.valueOf(orderId), Id.of(userId));
         return CommonResponse.success();
     }
 
@@ -68,8 +76,8 @@ public class OrderController {
      * 发货
      */
     @PutMapping("/{orderId}/ship")
-    public CommonResponse<Void> shipOrder(@PathVariable @Min(1) Long orderId) {
-        orderCommandService.shipOrder(Id.of(orderId));
+    public CommonResponse<Void> shipOrder(@PathVariable @Min(1) Long orderId, @RequestParam Long userId) {
+        orderCommandService.shipOrder(String.valueOf(orderId), Id.of(userId));
         return CommonResponse.success();
     }
 
@@ -77,8 +85,8 @@ public class OrderController {
      * 完成订单
      */
     @PutMapping("/{orderId}/complete")
-    public CommonResponse<Void> completeOrder(@PathVariable @Min(1) Long orderId) {
-        orderCommandService.completeOrder(Id.of(orderId));
+    public CommonResponse<Void> completeOrder(@PathVariable @Min(1) Long orderId, @RequestParam Long userId) {
+        orderCommandService.completeOrder(String.valueOf(orderId), Id.of(userId));
         return CommonResponse.success();
     }
 }

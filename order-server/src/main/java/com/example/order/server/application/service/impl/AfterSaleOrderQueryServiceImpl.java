@@ -36,13 +36,7 @@ public class AfterSaleOrderQueryServiceImpl implements AfterSaleOrderQueryServic
                 .orElseThrow(() -> new IllegalArgumentException("售后订单不存在: " + afterSaleNo));
     }
 
-    @Override
-    public AfterSaleOrderResponse getAfterSaleOrderById(Long afterSaleId) {
-        log.info("根据售后订单ID查询售后订单，ID: {}", afterSaleId);
-        return afterSaleOrderRepository.findById(afterSaleId)
-                .map(afterSaleOrderDtoAssembler::toAfterSaleOrderResponse)
-                .orElseThrow(() -> new IllegalArgumentException("售后订单不存在: " + afterSaleId));
-    }
+
 
     @Override
     public List<AfterSaleOrderResponse> getAfterSaleOrdersByUserId(Long userId) {

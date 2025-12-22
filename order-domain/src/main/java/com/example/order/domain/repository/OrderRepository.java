@@ -1,13 +1,13 @@
 package com.example.order.domain.repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import com.example.order.domain.model.aggregate.Order;
 import com.example.order.domain.model.vo.Id;
 import com.example.order.domain.model.vo.OrderStatus;
 import com.example.order.domain.model.vo.Page;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * 订单仓储接口
@@ -20,14 +20,14 @@ public interface OrderRepository {
     Order save(Order order);
 
     /**
-     * 根据订单ID查询订单
+     * 根据用户ID和订单号查询订单
      */
-    Optional<Order> findById(Id orderId);
+    Optional<Order> findByUserIdAndOrderNo(Id userId, String orderNo);
 
     /**
-     * 根据订单号查询订单
+     * 根据用户ID和订单ID查询订单
      */
-    Optional<Order> findByOrderNo(String orderNo);
+    Optional<Order> findByUserIdAndId(Id userId, Id orderId);
 
     /**
      * 根据用户ID查询订单列表

@@ -28,7 +28,7 @@ public class CreateOrderCommand {
 
     @NotEmpty(message = "订单商品不能为空")
     @Valid
-    private List<OrderItemCommand> items;
+    private List<com.example.order.server.application.dto.OrderItemCommand> items;
 
     public Long getUserId() {
         return userId;
@@ -62,11 +62,11 @@ public class CreateOrderCommand {
         this.couponId = couponId;
     }
 
-    public List<OrderItemCommand> getItems() {
+    public List<com.example.order.server.application.dto.OrderItemCommand> getItems() {
         return items;
     }
 
-    public void setItems(List<OrderItemCommand> items) {
+    public void setItems(List<com.example.order.server.application.dto.OrderItemCommand> items) {
         this.items = items;
     }
 
@@ -81,74 +81,5 @@ public class CreateOrderCommand {
                 '}';
     }
 
-    public static class OrderItemCommand {
 
-        @NotNull(message = "商品ID不能为空")
-        @Min(value = 1, message = "商品ID必须大于0")
-        private Long productId;
-
-        @NotEmpty(message = "商品名称不能为空")
-        private String productName;
-
-        @NotNull(message = "商品数量不能为空")
-        @Min(value = 1, message = "商品数量必须大于0")
-        private Integer quantity;
-
-        @NotNull(message = "商品价格不能为空")
-        @Min(value = 0, message = "商品价格必须大于等于0")
-        private Long price;
-
-        private String currency = "CNY";
-
-        public Long getProductId() {
-            return productId;
-        }
-
-        public void setProductId(Long productId) {
-            this.productId = productId;
-        }
-
-        public String getProductName() {
-            return productName;
-        }
-
-        public void setProductName(String productName) {
-            this.productName = productName;
-        }
-
-        public Integer getQuantity() {
-            return quantity;
-        }
-
-        public void setQuantity(Integer quantity) {
-            this.quantity = quantity;
-        }
-
-        public Long getPrice() {
-            return price;
-        }
-
-        public void setPrice(Long price) {
-            this.price = price;
-        }
-
-        public String getCurrency() {
-            return currency;
-        }
-
-        public void setCurrency(String currency) {
-            this.currency = currency;
-        }
-
-        @Override
-        public String toString() {
-            return "OrderItemRequest{" +
-                    "productId=" + productId +
-                    ", productName='" + productName + '\'' +
-                    ", quantity=" + quantity +
-                    ", price=" + price +
-                    ", currency='" + currency + '\'' +
-                    '}';
-        }
-    }
 }

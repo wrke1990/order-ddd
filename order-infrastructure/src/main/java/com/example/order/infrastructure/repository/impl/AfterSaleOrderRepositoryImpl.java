@@ -1,5 +1,11 @@
 package com.example.order.infrastructure.repository.impl;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Repository;
+
 import com.example.order.domain.model.aggregate.AfterSaleOrder;
 import com.example.order.domain.model.event.DomainEventPublisher;
 import com.example.order.domain.model.vo.AfterSaleStatus;
@@ -7,11 +13,6 @@ import com.example.order.domain.repository.AfterSaleOrderRepository;
 import com.example.order.infrastructure.assember.AfterSaleOrderAssembler;
 import com.example.order.infrastructure.persistence.po.AfterSaleOrderPO;
 import com.example.order.infrastructure.persistence.repository.JpaAfterSaleOrderRepository;
-import org.springframework.stereotype.Repository;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * 售后订单仓储实现
@@ -56,6 +57,13 @@ public class AfterSaleOrderRepositoryImpl implements AfterSaleOrderRepository {
     }
 
     @Override
+    public List<AfterSaleOrder> findByUserIdAndOrderNo(Long userId, String orderNo) {
+        return jpaAfterSaleOrderRepository.findByUserIdAndOrderNo(userId, orderNo).stream()
+                .map(afterSaleOrderAssembler::toAfterSaleOrder)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<AfterSaleOrder> findByUserIdAndStatus(Long userId, AfterSaleStatus status) {
         List<AfterSaleOrderPO> afterSaleOrderPOs;
         if (status != null) {
@@ -74,9 +82,5 @@ public class AfterSaleOrderRepositoryImpl implements AfterSaleOrderRepository {
         jpaAfterSaleOrderRepository.deleteByAfterSaleNo(afterSaleNo);
     }
 
-    @Override
-    public Optional<AfterSaleOrder> findById(Long id) {
-        return jpaAfterSaleOrderRepository.findById(id)
-                .map(afterSaleOrderAssembler::toAfterSaleOrder);
-    }
+
 }

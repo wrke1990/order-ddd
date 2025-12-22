@@ -1,27 +1,32 @@
 package com.example.order.domain.service.impl;
 
-import com.example.order.common.exception.BusinessException;
-import com.example.order.domain.model.aggregate.AfterSaleOrder;
-import com.example.order.domain.model.aggregate.Order;
-import com.example.order.domain.model.entity.OrderItem;
-import com.example.order.domain.model.vo.*;
-import com.example.order.domain.repository.AfterSaleOrderRepository;
-import com.example.order.domain.repository.OrderRepository;
-import com.example.order.domain.service.generator.OrderNoGenerator;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import org.mockito.Mock;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.example.order.common.exception.BusinessException;
+import com.example.order.domain.model.aggregate.AfterSaleOrder;
+import com.example.order.domain.model.aggregate.Order;
+import com.example.order.domain.model.entity.OrderItem;
+import com.example.order.domain.model.vo.Address;
+import com.example.order.domain.model.vo.Id;
+import com.example.order.domain.model.vo.OrderStatus;
+import com.example.order.domain.model.vo.PaymentMethod;
+import com.example.order.domain.model.vo.Price;
+import com.example.order.domain.repository.AfterSaleOrderRepository;
+import com.example.order.domain.repository.OrderRepository;
+import com.example.order.domain.service.generator.OrderNoGenerator;
 
 /**
  * OrderDomainServiceImpl测试
@@ -60,14 +65,14 @@ public class OrderDomainServiceImplTest {
 
         // 设置mock行为 - 返回传入的订单对象
         lenient().when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        lenient().when(orderRepository.findById(Id.of(1L))).thenReturn(Optional.of(testOrder));
-        lenient().when(orderRepository.findById(Id.of(2L))).thenReturn(Optional.empty());
-        lenient().when(orderRepository.findByOrderNo("ORDER-001")).thenReturn(Optional.of(testOrder));
-        lenient().when(orderRepository.findByOrderNo("ORDER-002")).thenReturn(Optional.empty());
+        lenient().when(orderRepository.findByUserIdAndId(Id.of(1L), Id.of(1L))).thenReturn(Optional.of(testOrder));
+        lenient().when(orderRepository.findByUserIdAndId(Id.of(1L), Id.of(2L))).thenReturn(Optional.empty());
+        lenient().when(orderRepository.findByUserIdAndOrderNo(Id.of(1L), "ORDER-001")).thenReturn(Optional.of(testOrder));
+        lenient().when(orderRepository.findByUserIdAndOrderNo(Id.of(1L), "ORDER-002")).thenReturn(Optional.empty());
         lenient().when(orderNoGenerator.generate()).thenReturn("ORDER-001");
 
         // 设置AfterSaleOrderRepository的mock行为
-        lenient().when(afterSaleOrderRepository.findByOrderNo("ORDER-001")).thenReturn(new ArrayList<>());
+        lenient().when(afterSaleOrderRepository.findByUserIdAndOrderNo(1L, "ORDER-001")).thenReturn(new ArrayList<>());
         lenient().when(afterSaleOrderRepository.save(any(AfterSaleOrder.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // 手动创建OrderDomainServiceImpl实例
@@ -146,58 +151,61 @@ public class OrderDomainServiceImplTest {
     @Test
     public void testPayOrder() {
         // 调用payOrder方法
-        orderDomainService.payOrder("ORDER-001");
+        orderDomainService.payOrder(testOrder);
 
         // 验证结果
         Assertions.assertEquals(OrderStatus.PAID, testOrder.getStatus());
 
         // 验证mock调用
-        verify(orderRepository, times(1)).findByOrderNo("ORDER-001");
+        // 由于我们直接传入了Order对象，不再需要调用findByUserIdAndOrderNo
+        verify(orderRepository, times(0)).findByUserIdAndOrderNo(any(Id.class), any(String.class));
         verify(orderRepository, times(1)).save(testOrder);
     }
 
     @Test
-    public void testPayOrderWithNonExistentOrder() {
-        // 测试支付不存在的订单
+    public void testPayOrderWithNullOrder() {
+        // 测试支付null订单
         Assertions.assertThrows(BusinessException.class, () -> {
-            orderDomainService.payOrder("ORDER-002");
+            orderDomainService.payOrder(null);
         });
     }
 
     @Test
     public void testCancelOrder() {
         // 调用cancelOrder方法
-        orderDomainService.cancelOrder("ORDER-001");
+        orderDomainService.cancelOrder(testOrder);
 
         // 验证结果
         Assertions.assertEquals(OrderStatus.CANCELLED, testOrder.getStatus());
 
         // 验证mock调用
-        verify(orderRepository, times(1)).findByOrderNo("ORDER-001");
+        // 由于我们直接传入了Order对象，不再需要调用findByUserIdAndOrderNo
+        verify(orderRepository, times(0)).findByUserIdAndOrderNo(any(Id.class), any(String.class));
         verify(orderRepository, times(1)).save(testOrder);
     }
 
     @Test
-    public void testCancelOrderWithNonExistentOrder() {
-        // 测试取消不存在的订单
+    public void testCancelOrderWithNullOrder() {
+        // 测试取消null订单
         Assertions.assertThrows(BusinessException.class, () -> {
-            orderDomainService.cancelOrder("ORDER-002");
+            orderDomainService.cancelOrder(null);
         });
     }
 
     @Test
     public void testShipOrder() {
         // 先支付订单
-        orderDomainService.payOrder("ORDER-001");
+        orderDomainService.payOrder(testOrder);
 
         // 调用shipOrder方法
-        orderDomainService.shipOrder("ORDER-001");
+        orderDomainService.shipOrder(testOrder);
 
         // 验证结果
         Assertions.assertEquals(OrderStatus.SHIPPED, testOrder.getStatus());
 
         // 验证mock调用
-        verify(orderRepository, times(2)).findByOrderNo("ORDER-001");
+        // 由于我们直接传入了Order对象，不再需要调用findByUserIdAndOrderNo
+        verify(orderRepository, times(0)).findByUserIdAndOrderNo(any(Id.class), any(String.class));
         verify(orderRepository, times(2)).save(testOrder);
     }
 
@@ -205,34 +213,35 @@ public class OrderDomainServiceImplTest {
     public void testShipOrderWithNonPaidOrder() {
         // 测试发货未支付的订单（应该在Order对象内部抛出异常）
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            orderDomainService.shipOrder("ORDER-001");
+            orderDomainService.shipOrder(testOrder);
         });
     }
 
     @Test
     public void testCompleteOrder() {
         // 先支付和发货订单
-        orderDomainService.payOrder("ORDER-001");
-        orderDomainService.shipOrder("ORDER-001");
+        orderDomainService.payOrder(testOrder);
+        orderDomainService.shipOrder(testOrder);
 
         // 调用completeOrder方法
-        orderDomainService.completeOrder("ORDER-001");
+        orderDomainService.completeOrder(testOrder);
 
         // 验证结果
         Assertions.assertEquals(OrderStatus.COMPLETED, testOrder.getStatus());
 
         // 验证mock调用
-        verify(orderRepository, times(3)).findByOrderNo("ORDER-001");
+        // 由于我们直接传入了Order对象，不再需要调用findByUserIdAndOrderNo
+        verify(orderRepository, times(0)).findByUserIdAndOrderNo(any(Id.class), any(String.class));
         verify(orderRepository, times(3)).save(testOrder);
     }
 
     @Test
     public void testCompleteOrderWithNonShippedOrder() {
         // 测试完成未发货的订单（应该在Order对象内部抛出异常）
-        orderDomainService.payOrder("ORDER-001");
+        orderDomainService.payOrder(testOrder);
 
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            orderDomainService.completeOrder("ORDER-001");
+            orderDomainService.completeOrder(testOrder);
         });
     }
 }

@@ -24,6 +24,11 @@ public interface JpaAfterSaleOrderRepository extends JpaRepository<AfterSaleOrde
     List<AfterSaleOrderPO> findByOrderNo(String orderNo);
 
     /**
+     * 根据用户ID和订单号查询售后订单列表
+     */
+    List<AfterSaleOrderPO> findByUserIdAndOrderNo(Long userId, String orderNo);
+
+    /**
      * 根据用户ID和状态查询售后订单列表
      */
     List<AfterSaleOrderPO> findByUserIdAndStatus(Long userId, String status);

@@ -20,7 +20,7 @@ public interface AfterSaleApiFacade {
     /**
      * 查询售后订单详情
      */
-    CommonResponse<AfterSaleResp> getAfterSale(Long afterSaleId);
+    CommonResponse<AfterSaleResp> getAfterSale(String afterSaleNo);
 
     /**
      * 查询用户售后订单列表
@@ -35,20 +35,20 @@ public interface AfterSaleApiFacade {
     /**
      * 取消售后订单
      */
-    CommonResponse<Void> cancelAfterSale(Long afterSaleId);
+    CommonResponse<Void> cancelAfterSale(String afterSaleNo);
 
     /**
      * 审批售后订单
      */
-    CommonResponse<Void> approveAfterSale(Long afterSaleId, String reason);
+    CommonResponse<Void> approveAfterSale(String afterSaleNo, String reason);
 
     /**
      * 拒绝售后订单
      */
-    CommonResponse<Void> rejectAfterSale(Long afterSaleId, String reason);
+    CommonResponse<Void> rejectAfterSale(String afterSaleNo, String reason);
 
     /**
      * 完成退款
      */
-    CommonResponse<Void> completeRefund(Long afterSaleId, Double refundAmount);
+    CommonResponse<Void> completeRefund(String afterSaleNo, Double refundAmount);
 }

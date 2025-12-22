@@ -1,5 +1,17 @@
 package com.example.order.server.application.service.impl;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.order.common.exception.BusinessException;
 import com.example.order.domain.model.aggregate.Order;
 import com.example.order.domain.model.entity.OrderItem;
@@ -18,17 +30,11 @@ import com.example.order.infrastructure.acl.promotion.PromotionClient;
 import com.example.order.infrastructure.acl.user.UserClient;
 import com.example.order.server.application.assember.OrderDtoAssembler;
 import com.example.order.server.application.dto.CreateOrderCommand;
+import com.example.order.server.application.dto.OrderItemCommand;
 import com.example.order.server.application.dto.OrderResponse;
 import com.example.order.server.application.service.OrderCommandService;
 import com.example.order.server.application.service.ProductValidationService;
 import com.example.order.server.application.service.ShoppingCartCommandService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.*;
 
 /**
  * 订单命令服务实现类
@@ -116,9 +122,9 @@ public class OrderCommandServiceImpl implements OrderCommandService {
     /**
      * 构建商品ID到数量的映射
      */
-    private Map<Id, Integer> buildProductQuantityMap(List<CreateOrderCommand.OrderItemCommand> itemCommands) {
+    private Map<Id, Integer> buildProductQuantityMap(List<OrderItemCommand> itemCommands) {
         Map<Id, Integer> productQuantityMap = new HashMap<>();
-        for (CreateOrderCommand.OrderItemCommand item : itemCommands) {
+        for (OrderItemCommand item : itemCommands) {
             Id productId = Id.of(item.getProductId());
             productQuantityMap.put(productId, item.getQuantity());
         }
@@ -260,35 +266,36 @@ public class OrderCommandServiceImpl implements OrderCommandService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "orders", key = "#orderId.getValue()")
-    public void payOrder(Id orderId) {
+    public void payOrder(String orderNo, Id userId) {
         try {
-            logger.info("支付订单，订单ID: {}", orderId);
-            // 直接调用领域服务支付订单
-            orderDomainService.payOrder(orderId.toString());
-            logger.info("订单支付成功，订单ID: {}", orderId);
+            logger.info("支付订单，订单号: {}, 用户ID: {}", orderNo, userId);
+            // 验证订单是否属于当前用户，使用findByUserIdAndOrderNo方法自动验证用户权限
+            Order order = orderRepository.findByUserIdAndOrderNo(userId, orderNo)
+                    .orElseThrow(() -> new BusinessException("订单不存在或无权操作"));
+            // 调用领域服务支付订单
+            orderDomainService.payOrder(order);
+            logger.info("订单支付成功，订单号: {}", orderNo);
         } catch (BusinessException e) {
-            logger.error("支付订单失败，订单ID: {}, 错误信息: {}", orderId, e.getMessage());
+            logger.error("支付订单失败，订单号: {}, 用户ID: {}, 错误信息: {}", orderNo, userId, e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("支付订单异常，订单ID: {}", orderId, e);
+            logger.error("支付订单异常，订单号: {}, 用户ID: {}", orderNo, userId, e);
             throw new BusinessException("支付订单失败");
         }
     }
 
     @Override
     @Transactional
-    @CacheEvict(value = "orders", key = "#orderId.getValue()")
-    public void cancelOrder(Id orderId) {
+    public void cancelOrder(String orderNo, Id userId) {
         try {
-            logger.info("取消订单，订单ID: {}", orderId);
+            logger.info("取消订单，订单号: {}, 用户ID: {}", orderNo, userId);
 
-            // 获取订单信息
-            Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new BusinessException("订单不存在"));
+            // 获取订单信息并验证是否属于当前用户，使用findByUserIdAndOrderNo方法自动验证用户权限
+            Order order = orderRepository.findByUserIdAndOrderNo(userId, orderNo)
+                    .orElseThrow(() -> new BusinessException("订单不存在或无权操作"));
 
             // 取消订单
-            orderDomainService.cancelOrder(orderId.toString());
+            orderDomainService.cancelOrder(order);
 
             // 批量解锁已锁定的商品库存
             Map<Id, Integer> productQuantityMap = new HashMap<>();
@@ -302,129 +309,137 @@ public class OrderCommandServiceImpl implements OrderCommandService {
                 logger.info("批量解锁商品库存成功");
             }
 
-            logger.info("订单取消成功，订单ID: {}", orderId);
+            logger.info("订单取消成功，订单号: {}", orderNo);
         } catch (BusinessException e) {
-            logger.error("取消订单失败，订单ID: {}, 错误信息: {}", orderId, e.getMessage());
+            logger.error("取消订单失败，订单号: {}, 用户ID: {}, 错误信息: {}", orderNo, userId, e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("取消订单异常，订单ID: {}", orderId, e);
+            logger.error("取消订单异常，订单号: {}, 用户ID: {}", orderNo, userId, e);
             throw new BusinessException("取消订单失败");
         }
     }
 
     @Override
     @Transactional
-    @CacheEvict(value = "orders", key = "#orderId.getValue()")
-    public void shipOrder(Id orderId) {
+    public void shipOrder(String orderNo, Id userId) {
         try {
-            logger.info("发货，订单ID: {}", orderId);
+            logger.info("发货，订单号: {}, 用户ID: {}", orderNo, userId);
+            // 验证订单是否属于当前用户，使用findByUserIdAndOrderNo方法自动验证用户权限
+            Order order = orderRepository.findByUserIdAndOrderNo(userId, orderNo)
+                    .orElseThrow(() -> new BusinessException("订单不存在或无权操作"));
             // 调用领域服务发货
-            orderDomainService.shipOrder(orderId.toString());
-
-            // 获取订单信息
-            Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new BusinessException("订单不存在"));
+            orderDomainService.shipOrder(order);
 
             // 调用履约系统创建物流信息（简化实现，实际项目中应该创建完整的LogisticsInfo对象）
             LogisticsInfo logisticsInfo = new LogisticsInfo("DefaultCourier", "");
-            String deliveryOrderId = fulfillmentClient.createDeliveryOrder(orderId, order.getUserId(), logisticsInfo);
-            logger.info("为订单创建物流信息，订单ID: {}, 发货单ID: {}", orderId, deliveryOrderId);
+            // 使用订单ID而不是订单号调用createDeliveryOrder方法
+            String deliveryOrderId = fulfillmentClient.createDeliveryOrder(order.getId(), order.getUserId(), logisticsInfo);
+            logger.info("为订单创建物流信息，订单号: {}, 发货单ID: {}", orderNo, deliveryOrderId);
 
-            logger.info("订单发货成功，订单ID: {}", orderId);
+            logger.info("订单发货成功，订单号: {}", orderNo);
         } catch (BusinessException e) {
-            logger.error("发货失败，订单ID: {}, 错误信息: {}", orderId, e.getMessage());
+            logger.error("发货失败，订单号: {}, 用户ID: {}, 错误信息: {}", orderNo, userId, e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("发货异常，订单ID: {}", orderId, e);
+            logger.error("发货异常，订单号: {}, 用户ID: {}", orderNo, userId, e);
             throw new BusinessException("发货失败");
         }
     }
 
     @Override
     @Transactional
-    @CacheEvict(value = "orders", key = "#orderId.getValue()")
-    public void confirmReceipt(Id orderId) {
+    public void confirmReceipt(String orderNo, Id userId) {
         try {
-            logger.info("确认收货，订单ID: {}", orderId);
-            // 直接从repository获取订单并更新
-            Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new BusinessException("订单不存在"));
-            order.confirmReceipt();
-            orderRepository.save(order); // 保存订单
-            logger.info("订单确认收货成功，订单ID: {}", orderId);
+            logger.info("确认收货，订单号: {}, 用户ID: {}", orderNo, userId);
+            // 验证订单是否属于当前用户
+            Order order = orderRepository.findByUserIdAndOrderNo(userId, orderNo)
+                    .orElseThrow(() -> new BusinessException("订单不存在或无权操作"));
+
+            // 调用领域服务确认收货
+            orderDomainService.confirmReceipt(order);
+
+            logger.info("订单确认收货成功，订单号: {}", orderNo);
         } catch (BusinessException e) {
-            logger.error("确认收货失败，订单ID: {}, 错误信息: {}", orderId, e.getMessage());
+            logger.error("确认收货失败，订单号: {}, 用户ID: {}, 错误信息: {}", orderNo, userId, e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("确认收货异常，订单ID: {}", orderId, e);
+            logger.error("确认收货异常，订单号: {}, 用户ID: {}", orderNo, userId, e);
             throw new BusinessException("确认收货失败");
         }
     }
 
     @Override
     @Transactional
-    @CacheEvict(value = "orders", key = "#orderId.getValue()")
-    public void changeShippingAddress(Id orderId, Id addressId) {
+    public void changeShippingAddress(String orderNo, Id addressId, Id userId) {
         try {
-            logger.info("修改订单地址，订单ID: {}, 新地址ID: {}", orderId, addressId);
-            orderDomainService.changeAddress(orderId.toString(), addressId);
-            logger.info("订单地址修改成功，订单ID: {}", orderId);
+            logger.info("修改订单地址，订单号: {}, 新地址ID: {}, 用户ID: {}", orderNo, addressId, userId);
+            // 验证订单是否属于当前用户
+            Order order = orderRepository.findByUserIdAndOrderNo(userId, orderNo)
+                    .orElseThrow(() -> new BusinessException("订单不存在或无权操作"));
+            // 调用领域服务修改地址
+            orderDomainService.changeAddress(order, addressId);
+            logger.info("订单地址修改成功，订单号: {}", orderNo);
         } catch (BusinessException e) {
-            logger.error("修改订单地址失败，订单ID: {}, 地址ID: {}, 错误信息: {}", orderId, addressId, e.getMessage());
+            logger.error("修改订单地址失败，订单号: {}, 地址ID: {}, 用户ID: {}, 错误信息: {}", orderNo, addressId, userId, e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("修改订单地址异常，订单ID: {}, 地址ID: {}", orderId, addressId, e);
+            logger.error("修改订单地址异常，订单号: {}, 地址ID: {}, 用户ID: {}", orderNo, addressId, userId, e);
             throw new BusinessException("修改订单地址失败");
         }
     }
 
     @Override
     @Transactional
-    @CacheEvict(value = "orders", key = "#orderId.getValue()")
-    public void changePaymentMethod(Id orderId, Id paymentMethodId) {
+    public void changePaymentMethod(String orderNo, Id paymentMethodId, Id userId) {
         try {
-            logger.info("修改订单支付方式，订单ID: {}, 新支付方式ID: {}", orderId, paymentMethodId);
-            orderDomainService.changePaymentMethod(orderId.toString(), paymentMethodId);
-            logger.info("订单支付方式修改成功，订单ID: {}", orderId);
+            logger.info("修改订单支付方式，订单号: {}, 新支付方式ID: {}, 用户ID: {}", orderNo, paymentMethodId, userId);
+            // 验证订单是否属于当前用户，使用findByUserIdAndOrderNo方法自动验证用户权限
+            Order order = orderRepository.findByUserIdAndOrderNo(userId, orderNo)
+                    .orElseThrow(() -> new BusinessException("订单不存在或无权操作"));
+            // 调用领域服务修改支付方式
+            orderDomainService.changePaymentMethod(order, paymentMethodId);
+            logger.info("订单支付方式修改成功，订单号: {}", orderNo);
         } catch (BusinessException e) {
-            logger.error("修改支付方式失败，订单ID: {}, 支付方式ID: {}, 错误信息: {}", orderId, paymentMethodId, e.getMessage());
+            logger.error("修改支付方式失败，订单号: {}, 支付方式ID: {}, 用户ID: {}, 错误信息: {}", orderNo, paymentMethodId, userId, e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("修改支付方式异常，订单ID: {}, 支付方式ID: {}", orderId, paymentMethodId, e);
+            logger.error("修改支付方式异常，订单号: {}, 支付方式ID: {}, 用户ID: {}", orderNo, paymentMethodId, userId, e);
             throw new BusinessException("修改支付方式失败");
         }
     }
 
     @Override
     @Transactional
-    @CacheEvict(value = "orders", key = "#orderId.getValue()")
-    public void applyCoupon(Id orderId, Id couponId) {
+    public void applyCoupon(String orderNo, Id couponId, Id userId) {
         try {
-            logger.info("应用优惠券，订单ID: {}, 优惠券ID: {}", orderId, couponId);
-            orderDomainService.applyCoupon(orderId.toString(), couponId);
-            logger.info("优惠券应用成功，订单ID: {}", orderId);
+            logger.info("应用优惠券，订单号: {}, 优惠券ID: {}, 用户ID: {}", orderNo, couponId, userId);
+            // 验证订单是否属于当前用户，使用findByUserIdAndOrderNo方法自动验证用户权限
+            Order order = orderRepository.findByUserIdAndOrderNo(userId, orderNo)
+                    .orElseThrow(() -> new BusinessException("订单不存在或无权操作"));
+            // 调用领域服务应用优惠券
+            orderDomainService.applyCoupon(order, couponId);
+            logger.info("优惠券应用成功，订单号: {}", orderNo);
         } catch (BusinessException e) {
-            logger.error("应用优惠券失败，订单ID: {}, 优惠券ID: {}, 错误信息: {}", orderId, couponId, e.getMessage());
+            logger.error("应用优惠券失败，订单号: {}, 优惠券ID: {}, 用户ID: {}, 错误信息: {}", orderNo, couponId, userId, e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("应用优惠券异常，订单ID: {}, 优惠券ID: {}", orderId, couponId, e);
+            logger.error("应用优惠券异常，订单号: {}, 优惠券ID: {}, 用户ID: {}", orderNo, couponId, userId, e);
             throw new BusinessException("应用优惠券失败");
         }
     }
 
     @Override
     @Transactional
-    @CacheEvict(value = "orders", key = "#orderId.getValue()")
-    public void completeOrder(Id orderId) {
+    public void completeOrder(String orderNo, Id userId) {
         try {
-            logger.info("完成订单，订单ID: {}", orderId);
+            logger.info("完成订单，订单号: {}, 用户ID: {}", orderNo, userId);
 
-            // 获取订单信息
-            Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new BusinessException("订单不存在"));
+            // 验证订单是否属于当前用户，使用findByUserIdAndOrderNo方法自动验证用户权限
+            Order order = orderRepository.findByUserIdAndOrderNo(userId, orderNo)
+                    .orElseThrow(() -> new BusinessException("订单不存在或无权操作"));
 
             // 完成订单
-            orderDomainService.completeOrder(orderId.toString());
+            orderDomainService.completeOrder(order);
 
             // 批量扣减商品库存
             Map<Id, Integer> productQuantityMap = new HashMap<>();
@@ -438,12 +453,12 @@ public class OrderCommandServiceImpl implements OrderCommandService {
                 logger.info("批量扣减商品库存成功");
             }
 
-            logger.info("订单完成成功，订单ID: {}", orderId);
+            logger.info("订单完成成功，订单号: {}", orderNo);
         } catch (BusinessException e) {
-            logger.error("完成订单失败，订单ID: {}, 错误信息: {}", orderId, e.getMessage());
+            logger.error("完成订单失败，订单号: {}, 用户ID: {}, 错误信息: {}", orderNo, userId, e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("完成订单异常，订单ID: {}", orderId, e);
+            logger.error("完成订单异常，订单号: {}, 用户ID: {}", orderNo, userId, e);
             throw new BusinessException("完成订单失败");
         }
     }
