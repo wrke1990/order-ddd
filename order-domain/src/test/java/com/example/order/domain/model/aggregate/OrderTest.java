@@ -137,8 +137,9 @@ public class OrderTest {
         // 准备测试数据
         Order order = createTestOrder();
         order.pay("PAY-001"); // 先支付
+        order.ship("顺丰快递", "SF-001"); // 再发货
 
-        // 已支付的订单尝试取消，应该抛出异常
+        // 已发货的订单尝试取消，应该抛出异常
         Assertions.assertThrows(IllegalArgumentException.class, order::cancel);
     }
 

@@ -1,18 +1,19 @@
 package com.example.order.infrastructure.assember;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Component;
-
 import com.example.order.domain.model.aggregate.Order;
 import com.example.order.domain.model.entity.OrderItem;
+import com.example.order.domain.model.vo.Address;
 import com.example.order.domain.model.vo.Id;
 import com.example.order.domain.model.vo.OrderStatus;
 import com.example.order.domain.model.vo.Price;
+import com.example.order.infrastructure.persistence.po.AddressPO;
 import com.example.order.infrastructure.persistence.po.OrderItemPO;
 import com.example.order.infrastructure.persistence.po.OrderPO;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 订单对象映射器
@@ -38,6 +39,12 @@ public class OrderAssembler {
         orderPO.setCreateTime(order.getCreateTime());
         orderPO.setUpdateTime(order.getUpdateTime());
         orderPO.setVersion(order.getVersion());
+
+        // 转换地址信息
+        if (order.getShippingAddress() != null) {
+            AddressPO addressPO = toAddressPO(order.getShippingAddress(), order.getOrderNo(), "SHIPPING");
+            orderPO.setShippingAddress(addressPO);
+        }
 
         // 转换订单项
         if (order.getOrderItems() != null) {
@@ -75,6 +82,9 @@ public class OrderAssembler {
                     .collect(Collectors.toList());
         }
 
+        // 转换地址信息
+        Address shippingAddress = toAddress(orderPO.getShippingAddress());
+
         // 使用reconstruct方法创建订单对象，替代反射
         return Order.reconstruct(
                 Id.of(orderPO.getId()),
@@ -86,7 +96,8 @@ public class OrderAssembler {
                 orderPO.getUpdateTime(),
                 null, // expireTime，从PO中无法获取
                 orderPO.getVersion(),
-                orderItems
+                orderItems,
+                shippingAddress
         );
     }
 
@@ -132,5 +143,50 @@ public class OrderAssembler {
         orderItem.setOrderNo(orderItemPO.getOrderNo());
 
         return orderItem;
+    }
+
+    /**
+     * 地址领域对象转PO
+     */
+    private AddressPO toAddressPO(Address address, String relatedNo, String addressType) {
+        if (address == null) {
+            return null;
+        }
+
+        AddressPO addressPO = new AddressPO();
+        if (address.getAddressId() != null) {
+            addressPO.setId(address.getAddressId().getValue());
+        }
+        addressPO.setReceiverName(address.getReceiverName());
+        addressPO.setReceiverPhone(address.getReceiverPhone());
+        addressPO.setProvince(address.getProvince());
+        addressPO.setCity(address.getCity());
+        addressPO.setDistrict(address.getDistrict());
+        addressPO.setDetailAddress(address.getDetailAddress());
+        addressPO.setPostalCode(address.getPostalCode());
+        addressPO.setRelatedNo(relatedNo);
+        addressPO.setAddressType(addressType);
+
+        return addressPO;
+    }
+
+    /**
+     * 地址PO转领域对象
+     */
+    private Address toAddress(AddressPO addressPO) {
+        if (addressPO == null) {
+            return null;
+        }
+
+        return new Address(
+                addressPO.getId() != null ? Id.of(addressPO.getId()) : null,
+                addressPO.getReceiverName(),
+                addressPO.getReceiverPhone(),
+                addressPO.getProvince(),
+                addressPO.getCity(),
+                addressPO.getDistrict(),
+                addressPO.getDetailAddress(),
+                addressPO.getPostalCode()
+        );
     }
 }

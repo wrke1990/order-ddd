@@ -1,19 +1,17 @@
 package com.example.order.infrastructure.assember;
 
+import com.example.order.domain.model.aggregate.AfterSaleOrder;
+import com.example.order.domain.model.entity.AfterSaleItem;
+import com.example.order.domain.model.vo.*;
+import com.example.order.infrastructure.persistence.po.AddressPO;
+import com.example.order.infrastructure.persistence.po.AfterSaleItemPO;
+import com.example.order.infrastructure.persistence.po.AfterSaleOrderPO;
+import org.springframework.stereotype.Component;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Component;
-
-import com.example.order.domain.model.aggregate.AfterSaleOrder;
-import com.example.order.domain.model.entity.AfterSaleItem;
-import com.example.order.domain.model.vo.AfterSaleStatus;
-import com.example.order.domain.model.vo.AfterSaleType;
-import com.example.order.domain.model.vo.Price;
-import com.example.order.infrastructure.persistence.po.AfterSaleItemPO;
-import com.example.order.infrastructure.persistence.po.AfterSaleOrderPO;
 
 /**
  * 售后订单对象映射器
@@ -49,6 +47,12 @@ public class AfterSaleOrderAssembler {
         // 设置总退款金额和货币
         afterSaleOrderPO.setTotalRefundAmount(afterSaleOrder.getTotalRefundAmount().getAmount());
         afterSaleOrderPO.setTotalCurrency(afterSaleOrder.getTotalRefundAmount().getCurrency());
+
+        // 设置退货地址信息
+        if (afterSaleOrder.getReturnAddress() != null) {
+            AddressPO addressPO = toAddressPO(afterSaleOrder.getReturnAddress(), afterSaleOrder.getAfterSaleNo(), "RETURN");
+            afterSaleOrderPO.setReturnAddress(addressPO);
+        }
 
         // 转换售后商品项
         if (afterSaleOrder.getAfterSaleItems() != null && !afterSaleOrder.getAfterSaleItems().isEmpty()) {
@@ -109,6 +113,9 @@ public class AfterSaleOrderAssembler {
         // 创建总退款金额对象
         Price totalRefundAmount = Price.ofCNY(afterSaleOrderPO.getTotalRefundAmount());
 
+        // 构建退货地址
+        Address returnAddress = toAddress(afterSaleOrderPO.getReturnAddress());
+
         // 使用reconstruct方法创建售后订单对象，替代反射
         return AfterSaleOrder.reconstruct(
                 afterSaleOrderPO.getId(),
@@ -128,6 +135,7 @@ public class AfterSaleOrderAssembler {
                 afterSaleOrderPO.getReverseLogisticsNo(),
                 afterSaleOrderPO.getReviewReason(),
                 afterSaleOrderPO.getRefundReason(),
+                returnAddress, // 从PO中构建退货地址
                 totalRefundAmount,
                 afterSaleItems
         );
@@ -162,5 +170,50 @@ public class AfterSaleOrderAssembler {
         }
 
         return item;
+    }
+
+    /**
+     * 地址领域对象转PO
+     */
+    private AddressPO toAddressPO(Address address, String relatedNo, String addressType) {
+        if (address == null) {
+            return null;
+        }
+
+        AddressPO addressPO = new AddressPO();
+        if (address.getAddressId() != null) {
+            addressPO.setId(address.getAddressId().getValue());
+        }
+        addressPO.setReceiverName(address.getReceiverName());
+        addressPO.setReceiverPhone(address.getReceiverPhone());
+        addressPO.setProvince(address.getProvince());
+        addressPO.setCity(address.getCity());
+        addressPO.setDistrict(address.getDistrict());
+        addressPO.setDetailAddress(address.getDetailAddress());
+        addressPO.setPostalCode(address.getPostalCode());
+        addressPO.setRelatedNo(relatedNo);
+        addressPO.setAddressType(addressType);
+
+        return addressPO;
+    }
+
+    /**
+     * 地址PO转领域对象
+     */
+    private Address toAddress(AddressPO addressPO) {
+        if (addressPO == null) {
+            return null;
+        }
+
+        return new Address(
+                addressPO.getId() != null ? Id.of(addressPO.getId()) : null,
+                addressPO.getReceiverName(),
+                addressPO.getReceiverPhone(),
+                addressPO.getProvince(),
+                addressPO.getCity(),
+                addressPO.getDistrict(),
+                addressPO.getDetailAddress(),
+                addressPO.getPostalCode()
+        );
     }
 }

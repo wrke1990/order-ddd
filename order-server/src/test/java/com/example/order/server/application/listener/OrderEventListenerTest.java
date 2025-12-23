@@ -1,19 +1,18 @@
 package com.example.order.server.application.listener;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.example.order.domain.model.entity.OrderItem;
+import com.example.order.domain.model.event.OrderCreatedEvent;
+import com.example.order.domain.model.vo.Id;
+import com.example.order.domain.model.vo.Price;
+import com.example.order.domain.service.ShoppingCartDomainService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.example.order.domain.model.entity.OrderItem;
-import com.example.order.domain.model.event.OrderCreatedEvent;
-import com.example.order.domain.model.vo.Id;
-import com.example.order.domain.model.vo.Price;
-import com.example.order.domain.service.ShoppingCartDomainService;
+import java.util.ArrayList;
+import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderEventListenerTest {

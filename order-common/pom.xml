@@ -13,14 +13,6 @@
     <name>order-common</name>
     <description>订单系统工具层</description>
 
-    <dependencies>
-        <!-- Spring Validation -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
-    </dependencies>
-
     <build>
         <plugins>
             <plugin>

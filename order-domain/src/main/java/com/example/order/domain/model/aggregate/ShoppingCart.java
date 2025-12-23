@@ -1,16 +1,12 @@
 package com.example.order.domain.model.aggregate;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 import com.example.order.domain.model.entity.ShoppingCartItem;
 import com.example.order.domain.model.vo.Id;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 购物车聚合根

@@ -1,12 +1,17 @@
 package com.example.order.server.application.service.impl;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
+import com.example.order.domain.model.aggregate.ShoppingCart;
+import com.example.order.domain.model.entity.ShoppingCartItem;
+import com.example.order.domain.model.vo.Id;
+import com.example.order.domain.repository.ShoppingCartRepository;
+import com.example.order.domain.service.ShoppingCartDomainService;
+import com.example.order.infrastructure.acl.product.ProductClient;
 import com.example.order.infrastructure.acl.product.dto.ProductDTO;
+import com.example.order.server.application.assember.ShoppingCartDtoAssembler;
+import com.example.order.server.application.dto.ShoppingCartCommand;
+import com.example.order.server.application.dto.ShoppingCartResponse;
+import com.example.order.server.application.service.ProductValidationService;
+import com.example.order.server.application.service.ShoppingCartCommandService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
@@ -14,17 +19,10 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.order.domain.model.aggregate.ShoppingCart;
-import com.example.order.domain.model.entity.ShoppingCartItem;
-import com.example.order.domain.model.vo.Id;
-import com.example.order.domain.repository.ShoppingCartRepository;
-import com.example.order.domain.service.ShoppingCartDomainService;
-import com.example.order.infrastructure.acl.product.ProductClient;
-import com.example.order.server.application.assember.ShoppingCartDtoAssembler;
-import com.example.order.server.application.dto.ShoppingCartCommand;
-import com.example.order.server.application.dto.ShoppingCartResponse;
-import com.example.order.server.application.service.ProductValidationService;
-import com.example.order.server.application.service.ShoppingCartCommandService;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 购物车命令服务实现

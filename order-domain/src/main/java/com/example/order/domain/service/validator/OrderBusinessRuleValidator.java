@@ -1,14 +1,14 @@
 package com.example.order.domain.service.validator;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import com.example.order.domain.model.aggregate.Order;
 import com.example.order.domain.model.entity.OrderItem;
 import com.example.order.domain.model.vo.Coupon;
 import com.example.order.domain.model.vo.Id;
 import com.example.order.domain.model.vo.OrderStatus;
 import com.example.order.domain.model.vo.Price;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * 订单业务规则验证器
@@ -139,11 +139,6 @@ public class OrderBusinessRuleValidator {
         if (!coupon.isValid(LocalDateTime.now(), order.getTotalAmount())) {
             throw new IllegalArgumentException("优惠券无效");
         }
-        // 计算使用优惠券后的金额，确保不小于0
-        long actualAmountValue = Math.max(0, order.getTotalAmount().getAmount() - coupon.getDiscountAmount().getAmount());
-        if (actualAmountValue < 0) {
-            throw new IllegalArgumentException("使用优惠券后订单金额不能为负数");
-        }
     }
 
     /**
@@ -153,8 +148,11 @@ public class OrderBusinessRuleValidator {
         if (order == null) {
             throw new IllegalArgumentException("订单不能为空");
         }
-        if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
-            throw new IllegalArgumentException("只有待支付状态的订单可以取消");
+        // 只有待支付、已支付或待发货状态的订单可以取消
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT &&
+            order.getStatus() != OrderStatus.PAID &&
+            order.getStatus() != OrderStatus.PENDING_SHIPMENT) {
+            throw new IllegalArgumentException("只有待支付、已支付或待发货状态的订单可以取消");
         }
     }
 

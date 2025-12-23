@@ -1,19 +1,20 @@
 package com.example.order.domain.model.aggregate;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import com.example.order.domain.model.entity.AfterSaleItem;
 import com.example.order.domain.model.event.AfterSaleOrderApprovedEvent;
 import com.example.order.domain.model.event.AfterSaleOrderCreatedEvent;
 import com.example.order.domain.model.event.AfterSaleOrderRefundedEvent;
 import com.example.order.domain.model.event.DomainEvent;
+import com.example.order.domain.model.vo.Address;
 import com.example.order.domain.model.vo.AfterSaleStatus;
 import com.example.order.domain.model.vo.AfterSaleType;
 import com.example.order.domain.model.vo.Price;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * 售后单聚合根
@@ -42,6 +43,7 @@ public class AfterSaleOrder implements Serializable {
     private String reverseLogisticsNo;
     private String reviewReason;
     private String refundReason;
+    private Address returnAddress; // 退货地址
     private final List<AfterSaleItem> afterSaleItems; // 售后商品项列表
     private final List<DomainEvent> domainEvents = new ArrayList<>(); // 领域事件列表
 
@@ -50,7 +52,7 @@ public class AfterSaleOrder implements Serializable {
      */
     private AfterSaleOrder(String afterSaleNo, String orderNo, Long userId,
                           AfterSaleType type, String reason, String description, String images,
-                          List<AfterSaleItem> afterSaleItems) {
+                          List<AfterSaleItem> afterSaleItems, Address returnAddress) {
         this.afterSaleNo = afterSaleNo;
         this.orderNo = orderNo;
         this.userId = userId;
@@ -59,6 +61,7 @@ public class AfterSaleOrder implements Serializable {
         this.reason = reason;
         this.description = description;
         this.images = images;
+        this.returnAddress = returnAddress;
         this.adminInitiated = false;
         this.createTime = LocalDateTime.now();
         this.updateTime = LocalDateTime.now();
@@ -94,7 +97,35 @@ public class AfterSaleOrder implements Serializable {
         validateBasicInfo(afterSaleNo, orderNo, userId, type, reason);
         validateAfterSaleItems(afterSaleItems);
 
-        AfterSaleOrder afterSaleOrder = new AfterSaleOrder(afterSaleNo, orderNo, userId, type, reason, description, images, afterSaleItems);
+        AfterSaleOrder afterSaleOrder = new AfterSaleOrder(afterSaleNo, orderNo, userId, type, reason, description, images, afterSaleItems, null);
+        afterSaleOrder.adminInitiated = adminInitiated;
+        afterSaleOrder.createAfterSaleOrderCreatedEvent();
+        return afterSaleOrder;
+    }
+
+    /**
+     * 创建售后单（带退货地址）
+     * @param afterSaleNo 售后单号
+     * @param orderNo 订单号
+     * @param userId 用户ID
+     * @param type 售后类型
+     * @param reason 售后原因
+     * @param description 售后详情
+     * @param images 售后图片
+     * @param afterSaleItems 售后商品项列表
+     * @param returnAddress 退货地址
+     * @param adminInitiated 是否由管理员发起（超级退款）
+     */
+    public static AfterSaleOrder create(String afterSaleNo, String orderNo,
+                                       Long userId, AfterSaleType type,
+                                       String reason, String description, String images,
+                                       List<AfterSaleItem> afterSaleItems,
+                                       Address returnAddress,
+                                       boolean adminInitiated) {
+        validateBasicInfo(afterSaleNo, orderNo, userId, type, reason);
+        validateAfterSaleItems(afterSaleItems);
+
+        AfterSaleOrder afterSaleOrder = new AfterSaleOrder(afterSaleNo, orderNo, userId, type, reason, description, images, afterSaleItems, returnAddress);
         afterSaleOrder.adminInitiated = adminInitiated;
         afterSaleOrder.createAfterSaleOrderCreatedEvent();
         return afterSaleOrder;
@@ -107,7 +138,18 @@ public class AfterSaleOrder implements Serializable {
                                                  Long userId, List<AfterSaleItem> afterSaleItems) {
         return create(afterSaleNo, orderNo, userId,
                      AfterSaleType.REFUND_ONLY, "超级退款", null, null,
-                     afterSaleItems, true);
+                     afterSaleItems, null, true);
+    }
+
+    /**
+     * 创建超级退款（客服发起，带退货地址）
+     */
+    public static AfterSaleOrder createSuperRefund(String afterSaleNo, String orderNo,
+                                                 Long userId, List<AfterSaleItem> afterSaleItems,
+                                                 Address returnAddress) {
+        return create(afterSaleNo, orderNo, userId,
+                     AfterSaleType.REFUND_ONLY, "超级退款", null, null,
+                     afterSaleItems, returnAddress, true);
     }
 
     /**
@@ -119,10 +161,10 @@ public class AfterSaleOrder implements Serializable {
                                             String reason, String description, String images, Boolean adminInitiated,
                                             LocalDateTime createTime, LocalDateTime updateTime, Integer version,
                                             Long customerServiceId, String reverseLogisticsNo, String reviewReason,
-                                            String refundReason, Price totalRefundAmount, List<AfterSaleItem> afterSaleItems) {
+                                            String refundReason, Address returnAddress, Price totalRefundAmount, List<AfterSaleItem> afterSaleItems) {
 
         // 创建售后订单对象
-        AfterSaleOrder afterSaleOrder = new AfterSaleOrder(afterSaleNo, orderNo, userId, type, reason, description, images, afterSaleItems);
+        AfterSaleOrder afterSaleOrder = new AfterSaleOrder(afterSaleNo, orderNo, userId, type, reason, description, images, afterSaleItems, returnAddress);
 
         // 设置从数据库加载的属性
         afterSaleOrder.id = id;
@@ -506,6 +548,14 @@ public class AfterSaleOrder implements Serializable {
         this.refundReason = refundReason;
     }
 
+    public Address getReturnAddress() {
+        return returnAddress;
+    }
+
+    public void setReturnAddress(Address returnAddress) {
+        this.returnAddress = returnAddress;
+    }
+
     public Integer getVersion() {
         return version;
     }
@@ -528,6 +578,7 @@ public class AfterSaleOrder implements Serializable {
                 ", type=" + type +
                 ", status=" + status +
                 ", totalRefundAmount=" + totalRefundAmount +
+                ", returnAddress=" + returnAddress +
                 ", afterSaleItemsSize=" + this.afterSaleItems.size() +
                 ", createTime=" + createTime +
                 ", updateTime=" + updateTime +

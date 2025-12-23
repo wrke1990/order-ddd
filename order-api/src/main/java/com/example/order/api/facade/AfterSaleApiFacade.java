@@ -1,9 +1,9 @@
 package com.example.order.api.facade;
 
 import com.example.order.api.vo.req.CreateAfterSaleReq;
+import com.example.order.api.vo.req.AfterSaleStatus;
 import com.example.order.api.vo.resp.AfterSaleResp;
 import com.example.order.common.response.CommonResponse;
-import com.example.order.domain.model.vo.AfterSaleStatus;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public interface AfterSaleApiFacade {
     /**
      * 查询售后订单详情
      */
-    CommonResponse<AfterSaleResp> getAfterSale(String afterSaleNo);
+    CommonResponse<AfterSaleResp> getAfterSale(Long afterSaleId);
 
     /**
      * 查询用户售后订单列表
@@ -35,20 +35,21 @@ public interface AfterSaleApiFacade {
     /**
      * 取消售后订单
      */
-    CommonResponse<Void> cancelAfterSale(String afterSaleNo);
+    CommonResponse<Void> cancelAfterSale(Long afterSaleId);
 
     /**
      * 审批售后订单
      */
-    CommonResponse<Void> approveAfterSale(String afterSaleNo, String reason);
+    CommonResponse<Void> approveAfterSale(Long afterSaleId, String reason);
 
     /**
      * 拒绝售后订单
      */
-    CommonResponse<Void> rejectAfterSale(String afterSaleNo, String reason);
+    CommonResponse<Void> rejectAfterSale(Long afterSaleId, String reason);
 
     /**
      * 完成退款
      */
-    CommonResponse<Void> completeRefund(String afterSaleNo, Double refundAmount);
+    CommonResponse<Void> completeRefund(Long afterSaleId, Double refundAmount);
+
 }

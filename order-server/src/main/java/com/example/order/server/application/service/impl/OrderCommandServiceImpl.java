@@ -1,17 +1,5 @@
 package com.example.order.server.application.service.impl;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.example.order.common.exception.BusinessException;
 import com.example.order.domain.model.aggregate.Order;
 import com.example.order.domain.model.entity.OrderItem;
@@ -35,6 +23,13 @@ import com.example.order.server.application.dto.OrderResponse;
 import com.example.order.server.application.service.OrderCommandService;
 import com.example.order.server.application.service.ProductValidationService;
 import com.example.order.server.application.service.ShoppingCartCommandService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
 
 /**
  * 订单命令服务实现类

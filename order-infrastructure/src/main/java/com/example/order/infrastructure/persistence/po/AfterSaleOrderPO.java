@@ -1,18 +1,8 @@
 package com.example.order.infrastructure.persistence.po;
 
+import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
-
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.persistence.Version;
 
 /**
  * 售后订单持久化对象
@@ -78,6 +68,11 @@ public class AfterSaleOrderPO {
 
     @Column(name = "refund_reason", length = 200)
     private String refundReason;
+
+    // 关联退货地址
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "return_address_id", referencedColumnName = "id")
+    private AddressPO returnAddress;
 
     public Long getId() {
         return id;
@@ -221,5 +216,13 @@ public class AfterSaleOrderPO {
 
     public void setRefundReason(String refundReason) {
         this.refundReason = refundReason;
+    }
+
+    public AddressPO getReturnAddress() {
+        return returnAddress;
+    }
+
+    public void setReturnAddress(AddressPO returnAddress) {
+        this.returnAddress = returnAddress;
     }
 }

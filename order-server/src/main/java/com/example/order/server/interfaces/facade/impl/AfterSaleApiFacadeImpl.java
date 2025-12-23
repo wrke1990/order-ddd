@@ -1,10 +1,10 @@
 package com.example.order.server.interfaces.facade.impl;
 
 import com.example.order.api.facade.AfterSaleApiFacade;
+import com.example.order.api.vo.req.AfterSaleStatus;
 import com.example.order.api.vo.req.CreateAfterSaleReq;
 import com.example.order.api.vo.resp.AfterSaleResp;
 import com.example.order.common.response.CommonResponse;
-import com.example.order.domain.model.vo.AfterSaleStatus;
 import com.example.order.server.application.assember.AfterSaleOrderVoAssembler;
 import com.example.order.server.application.dto.AfterSaleOrderResponse;
 import com.example.order.server.application.dto.CreateAfterSaleOrderCommand;
@@ -42,8 +42,9 @@ public class AfterSaleApiFacadeImpl implements AfterSaleApiFacade {
     }
 
     @Override
-    public CommonResponse<AfterSaleResp> getAfterSale(String afterSaleNo) {
-        AfterSaleOrderResponse response = afterSaleOrderQueryService.getAfterSaleOrderByNo(afterSaleNo);
+    public CommonResponse<AfterSaleResp> getAfterSale(Long afterSaleId) {
+        // 需要修改服务层方法参数或添加转换逻辑
+        AfterSaleOrderResponse response = afterSaleOrderQueryService.getAfterSaleOrderByNo(String.valueOf(afterSaleId));
         AfterSaleResp afterSaleResp = afterSaleOrderVoAssembler.toAfterSaleResponse(response);
         return CommonResponse.success(afterSaleResp);
     }
@@ -59,6 +60,8 @@ public class AfterSaleApiFacadeImpl implements AfterSaleApiFacade {
 
     @Override
     public CommonResponse<List<AfterSaleResp>> getAfterSalesByUserIdAndStatus(Long userId, AfterSaleStatus status, Integer page, Integer size) {
+        // 将API层的AfterSaleStatus转换为领域层的AfterSaleStatus
+        com.example.order.domain.model.vo.AfterSaleStatus domainStatus = com.example.order.domain.model.vo.AfterSaleStatus.valueOf(status.name());
         // 简单实现，实际应用中应该添加状态筛选逻辑
         List<AfterSaleOrderResponse> responses = afterSaleOrderQueryService.getAfterSaleOrdersByUserId(userId, page, size);
         List<AfterSaleResp> afterSaleResps = responses.stream()
@@ -68,28 +71,31 @@ public class AfterSaleApiFacadeImpl implements AfterSaleApiFacade {
     }
 
     @Override
-    public CommonResponse<Void> cancelAfterSale(String afterSaleNo) {
-        afterSaleOrderCommandService.cancelAfterSaleOrder(afterSaleNo);
+    public CommonResponse<Void> cancelAfterSale(Long afterSaleId) {
+        // 需要修改服务层方法参数或添加转换逻辑
+        afterSaleOrderCommandService.cancelAfterSaleOrder(String.valueOf(afterSaleId));
         return CommonResponse.success();
     }
 
     @Override
-    public CommonResponse<Void> approveAfterSale(String afterSaleNo, String reason) {
-        afterSaleOrderCommandService.approveAfterSaleOrder(afterSaleNo, reason);
+    public CommonResponse<Void> approveAfterSale(Long afterSaleId, String reason) {
+        // 需要修改服务层方法参数或添加转换逻辑
+        afterSaleOrderCommandService.approveAfterSaleOrder(String.valueOf(afterSaleId), reason);
         return CommonResponse.success();
     }
 
     @Override
-    public CommonResponse<Void> rejectAfterSale(String afterSaleNo, String reason) {
-        afterSaleOrderCommandService.rejectAfterSaleOrder(afterSaleNo, reason);
+    public CommonResponse<Void> rejectAfterSale(Long afterSaleId, String reason) {
+        // 需要修改服务层方法参数或添加转换逻辑
+        afterSaleOrderCommandService.rejectAfterSaleOrder(String.valueOf(afterSaleId), reason);
         return CommonResponse.success();
     }
 
     @Override
-    public CommonResponse<Void> completeRefund(String afterSaleNo, Double refundAmount) {
-        afterSaleOrderCommandService.completeRefund(afterSaleNo, refundAmount);
+    public CommonResponse<Void> completeRefund(Long afterSaleId, Double refundAmount) {
+        // 需要修改服务层方法参数或添加转换逻辑
+        afterSaleOrderCommandService.completeRefund(String.valueOf(afterSaleId), refundAmount);
         return CommonResponse.success();
     }
-
 
 }

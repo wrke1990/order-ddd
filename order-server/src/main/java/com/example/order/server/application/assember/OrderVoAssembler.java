@@ -1,9 +1,5 @@
 package com.example.order.server.application.assember;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Mappings;
-
 import com.example.order.api.vo.req.CreateOrderReq;
 import com.example.order.api.vo.req.OrderItemReq;
 import com.example.order.api.vo.resp.OrderItemResp;
@@ -12,6 +8,9 @@ import com.example.order.server.application.dto.CreateOrderCommand;
 import com.example.order.server.application.dto.OrderItemCommand;
 import com.example.order.server.application.dto.OrderItemResponse;
 import com.example.order.server.application.dto.OrderResponse;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Mappings;
 
 /**
  * 订单VO与应用服务DTO转换器

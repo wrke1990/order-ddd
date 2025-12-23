@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
@@ -96,7 +96,7 @@ public class TransactionAwareDomainEventPublisher implements DomainEventPublishe
     /**
      * 事务同步器，负责在事务提交后发布事件
      */
-    private class EventPublishingTransactionSynchronization extends TransactionSynchronizationAdapter {
+    private class EventPublishingTransactionSynchronization implements TransactionSynchronization {
 
         private final List<DomainEvent> events = new ArrayList<>();
 
@@ -124,5 +124,21 @@ public class TransactionAwareDomainEventPublisher implements DomainEventPublishe
                 }
             }
         }
+        
+        // 实现 TransactionSynchronization 接口的其他必要方法
+        @Override
+        public void suspend() {}
+
+        @Override
+        public void resume() {}
+
+        @Override
+        public void flush() {}
+
+        @Override
+        public void beforeCommit(boolean readOnly) {}
+
+        @Override
+        public void beforeCompletion() {}
     }
 }

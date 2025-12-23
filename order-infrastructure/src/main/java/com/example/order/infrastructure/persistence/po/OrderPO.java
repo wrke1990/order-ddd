@@ -43,6 +43,11 @@ public class OrderPO {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<OrderItemPO> orderItems;
 
+    // 关联收货地址
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "shipping_address_id", referencedColumnName = "id")
+    private AddressPO shippingAddress;
+
     public Long getId() {
         return id;
     }
@@ -123,6 +128,14 @@ public class OrderPO {
         this.orderItems = orderItems;
     }
 
+    public AddressPO getShippingAddress() {
+        return shippingAddress;
+    }
+
+    public void setShippingAddress(AddressPO shippingAddress) {
+        this.shippingAddress = shippingAddress;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -150,6 +163,7 @@ public class OrderPO {
                 ", createTime=" + createTime +
                 ", updateTime=" + updateTime +
                 ", version=" + version +
+                ", shippingAddress=" + shippingAddress +
                 '}';
     }
 }

@@ -1,11 +1,10 @@
 package com.example.order.api.vo.req;
 
-import java.util.List;
-
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.util.List;
 
 /**
  * 创建售后请求VO

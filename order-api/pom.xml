@@ -19,24 +19,11 @@
             <artifactId>order-common</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- Domain Module -->
-        <dependency>
-            <groupId>com.example.order</groupId>
-            <artifactId>order-domain</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 
+        <!-- Validation API -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.mapstruct</groupId>
-            <artifactId>mapstruct</artifactId>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
         </dependency>
 
     </dependencies>

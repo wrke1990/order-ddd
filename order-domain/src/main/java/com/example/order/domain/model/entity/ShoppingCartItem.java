@@ -1,8 +1,8 @@
 package com.example.order.domain.model.entity;
 
-import java.io.Serializable;
-
 import com.example.order.domain.model.vo.Price;
+
+import java.io.Serializable;
 
 /**
  * 购物车项实体

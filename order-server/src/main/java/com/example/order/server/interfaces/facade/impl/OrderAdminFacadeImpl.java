@@ -1,7 +1,5 @@
 package com.example.order.server.interfaces.facade.impl;
 
-import org.springframework.stereotype.Service;
-
 import com.example.order.admin.facade.OrderAdminFacade;
 import com.example.order.admin.vo.req.OrderQueryReq;
 import com.example.order.admin.vo.resp.OrderResp;
@@ -11,6 +9,7 @@ import com.example.order.domain.model.vo.Id;
 import com.example.order.server.application.dto.OrderResponse;
 import com.example.order.server.application.service.OrderCommandService;
 import com.example.order.server.application.service.OrderQueryService;
+import org.springframework.stereotype.Service;
 
 /**
  * 订单管理后台接口实现

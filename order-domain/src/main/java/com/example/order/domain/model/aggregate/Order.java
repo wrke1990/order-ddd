@@ -110,7 +110,7 @@ public class Order implements Serializable {
      */
     public static Order reconstruct(Id id, Id userId, String orderNo, OrderStatus status,
                                    Price totalAmount, LocalDateTime createTime, LocalDateTime updateTime,
-                                   LocalDateTime expireTime, Integer version, List<OrderItem> orderItems) {
+                                   LocalDateTime expireTime, Integer version, List<OrderItem> orderItems, Address shippingAddress) {
         // 复制订单项列表，避免外部修改
         List<OrderItem> copiedItems = new ArrayList<>(orderItems.size());
         for (OrderItem item : orderItems) {
@@ -129,8 +129,8 @@ public class Order implements Serializable {
             copiedItems.add(copiedItem);
         }
 
-        // 创建订单对象，shippingAddress和paymentMethod设为null，因为从PO中无法获取
-        Order order = new Order(userId, copiedItems, orderNo, null, null);
+        // 创建订单对象
+        Order order = new Order(userId, copiedItems, orderNo, shippingAddress, null);
 
         // 设置从数据库加载的属性
         order.id = id;
@@ -218,8 +218,8 @@ public class Order implements Serializable {
      * 修改地址（仅未发货时可修改）
      */
     public void changeShippingAddress(Address newAddress) {
-        if (this.status != OrderStatus.PAID && this.status != OrderStatus.PENDING_SHIPMENT) {
-            throw new IllegalArgumentException("只有已支付或待发货状态的订单可以修改地址");
+        if (this.status != OrderStatus.PENDING_PAYMENT && this.status != OrderStatus.PAID && this.status != OrderStatus.PENDING_SHIPMENT) {
+            throw new IllegalArgumentException("只有待支付、已支付或待发货状态的订单可以修改地址");
         }
         if (newAddress == null) {
             throw new IllegalArgumentException("新地址不能为空");
@@ -267,8 +267,8 @@ public class Order implements Serializable {
      * 标记订单已发货
      */
     public void ship(String logisticsCompany, String trackingNumber) {
-        if (this.status != OrderStatus.PAID) {
-            throw new IllegalArgumentException("只有已支付的订单可以发货");
+        if (this.status != OrderStatus.PAID && this.status != OrderStatus.PENDING_SHIPMENT) {
+            throw new IllegalArgumentException("只有已支付或待发货状态的订单可以发货");
         }
         if (logisticsCompany == null || logisticsCompany.isEmpty() ||
             trackingNumber == null || trackingNumber.isEmpty()) {
@@ -339,8 +339,8 @@ public class Order implements Serializable {
      * 完成订单
      */
     public void complete() {
-        if (this.status != OrderStatus.SHIPPED) {
-            throw new IllegalArgumentException("只有已发货的订单可以完成");
+        if (this.status != OrderStatus.SHIPPED && this.status != OrderStatus.PENDING_RECEIPT) {
+            throw new IllegalArgumentException("只有已发货或待收货状态的订单可以完成");
         }
 
         this.status = OrderStatus.COMPLETED;

@@ -1,7 +1,6 @@
 package com.example.order.infrastructure.acl.product;
 
 import com.example.order.domain.model.vo.Id;
-import com.example.order.domain.model.vo.Price;
 import com.example.order.infrastructure.acl.product.dto.ProductDTO;
 
 import java.util.List;

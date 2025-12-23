@@ -1,32 +1,26 @@
 package com.example.order.domain.service.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import static org.mockito.ArgumentMatchers.any;
-import org.mockito.Mock;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import com.example.order.common.exception.BusinessException;
 import com.example.order.domain.model.aggregate.AfterSaleOrder;
 import com.example.order.domain.model.aggregate.Order;
 import com.example.order.domain.model.entity.OrderItem;
-import com.example.order.domain.model.vo.Address;
-import com.example.order.domain.model.vo.Id;
-import com.example.order.domain.model.vo.OrderStatus;
-import com.example.order.domain.model.vo.PaymentMethod;
-import com.example.order.domain.model.vo.Price;
+import com.example.order.domain.model.vo.*;
 import com.example.order.domain.repository.AfterSaleOrderRepository;
 import com.example.order.domain.repository.OrderRepository;
 import com.example.order.domain.service.generator.OrderNoGenerator;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 /**
  * OrderDomainServiceImpl测试
