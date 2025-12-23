@@ -68,9 +68,8 @@ public class AppConfig {
 
     @Bean
     public OrderDomainService orderDomainService(OrderRepository orderRepository,
-                                                OrderNoGenerator orderNoGenerator,
-                                                AfterSaleOrderRepository afterSaleOrderRepository) {
-        return new OrderDomainServiceImpl(orderRepository, orderNoGenerator, afterSaleOrderRepository);
+                                                OrderNoGenerator orderNoGenerator) {
+        return new OrderDomainServiceImpl(orderRepository, orderNoGenerator);
     }
 
     @Bean

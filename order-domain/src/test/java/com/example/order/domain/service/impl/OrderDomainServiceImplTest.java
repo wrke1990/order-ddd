@@ -1,11 +1,9 @@
 package com.example.order.domain.service.impl;
 
 import com.example.order.common.exception.BusinessException;
-import com.example.order.domain.model.aggregate.AfterSaleOrder;
 import com.example.order.domain.model.aggregate.Order;
 import com.example.order.domain.model.entity.OrderItem;
 import com.example.order.domain.model.vo.*;
-import com.example.order.domain.repository.AfterSaleOrderRepository;
 import com.example.order.domain.repository.OrderRepository;
 import com.example.order.domain.service.generator.OrderNoGenerator;
 import org.junit.jupiter.api.Assertions;
@@ -33,9 +31,6 @@ public class OrderDomainServiceImplTest {
 
     @Mock
     private OrderNoGenerator orderNoGenerator;
-
-    @Mock
-    private AfterSaleOrderRepository afterSaleOrderRepository;
 
     private OrderDomainServiceImpl orderDomainService;
 
@@ -65,12 +60,8 @@ public class OrderDomainServiceImplTest {
         lenient().when(orderRepository.findByUserIdAndOrderNo(Id.of(1L), "ORDER-002")).thenReturn(Optional.empty());
         lenient().when(orderNoGenerator.generate()).thenReturn("ORDER-001");
 
-        // 设置AfterSaleOrderRepository的mock行为
-        lenient().when(afterSaleOrderRepository.findByUserIdAndOrderNo(1L, "ORDER-001")).thenReturn(new ArrayList<>());
-        lenient().when(afterSaleOrderRepository.save(any(AfterSaleOrder.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        // 手动创建OrderDomainServiceImpl实例
-        orderDomainService = new OrderDomainServiceImpl(orderRepository, orderNoGenerator, afterSaleOrderRepository);
+        // 手动创建OrderDomainServiceImpl实例（只传入需要的参数）
+        orderDomainService = new OrderDomainServiceImpl(orderRepository, orderNoGenerator);
     }
 
     @Test

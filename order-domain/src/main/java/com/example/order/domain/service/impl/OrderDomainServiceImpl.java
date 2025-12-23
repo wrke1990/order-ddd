@@ -3,7 +3,6 @@ package com.example.order.domain.service.impl;
 import com.example.order.common.exception.BusinessException;
 import com.example.order.domain.model.aggregate.Order;
 import com.example.order.domain.model.vo.*;
-import com.example.order.domain.repository.AfterSaleOrderRepository;
 import com.example.order.domain.repository.OrderRepository;
 import com.example.order.domain.service.OrderDomainService;
 import com.example.order.domain.service.generator.OrderNoGenerator;
@@ -20,12 +19,10 @@ public class OrderDomainServiceImpl implements OrderDomainService {
     private static final Logger logger = LoggerFactory.getLogger(OrderDomainServiceImpl.class);
     private final OrderRepository orderRepository;
     private final OrderNoGenerator orderNoGenerator;
-    private final AfterSaleOrderRepository afterSaleOrderRepository;
 
-    public OrderDomainServiceImpl(OrderRepository orderRepository, OrderNoGenerator orderNoGenerator, AfterSaleOrderRepository afterSaleOrderRepository) {
+    public OrderDomainServiceImpl(OrderRepository orderRepository, OrderNoGenerator orderNoGenerator) {
         this.orderRepository = orderRepository;
         this.orderNoGenerator = orderNoGenerator;
-        this.afterSaleOrderRepository = afterSaleOrderRepository;
     }
 
     @Override
@@ -41,8 +38,6 @@ public class OrderDomainServiceImpl implements OrderDomainService {
         // 保存订单
         return orderRepository.save(order);
     }
-
-
 
     @Override
     public Order payOrder(Order order) {
