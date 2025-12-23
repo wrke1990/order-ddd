@@ -18,8 +18,6 @@ import org.mapstruct.factory.Mappers;
 @Mapper(componentModel = "spring")
 public interface OrderDtoAssembler {
 
-    OrderDtoAssembler INSTANCE = Mappers.getMapper(OrderDtoAssembler.class);
-
     /**
      * 订单命令项转领域实体
      */
@@ -36,7 +34,7 @@ public interface OrderDtoAssembler {
                 productPrice
         );
     }
-    
+
     /**
      * 从ProductDTO创建OrderItem
      */
