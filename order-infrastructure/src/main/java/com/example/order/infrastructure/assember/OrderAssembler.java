@@ -40,6 +40,14 @@ public class OrderAssembler {
         orderPO.setUpdateTime(order.getUpdateTime());
         orderPO.setVersion(order.getVersion());
 
+        // 设置实际支付金额
+        if (order.getActualAmount() != null) {
+            orderPO.setActualAmount(order.getActualAmount().getAmount());
+        }
+
+        // 设置支付单号
+        orderPO.setPaymentNo(order.getPaymentNo());
+
         // 转换地址信息
         if (order.getShippingAddress() != null) {
             AddressPO addressPO = toAddressPO(order.getShippingAddress(), order.getOrderNo(), "SHIPPING");
@@ -85,6 +93,11 @@ public class OrderAssembler {
         // 转换地址信息
         Address shippingAddress = toAddress(orderPO.getShippingAddress());
 
+        // 创建实际支付金额对象
+        // 添加空值检查，确保代码健壮性
+        Price actualAmount = orderPO.getActualAmount() != null ?
+            new Price(orderPO.getActualAmount(), orderPO.getCurrency()) : null;
+
         // 使用reconstruct方法创建订单对象，替代反射
         return Order.reconstruct(
                 Id.of(orderPO.getId()),
@@ -92,6 +105,8 @@ public class OrderAssembler {
                 orderPO.getOrderNo(),
                 OrderStatus.valueOf(orderPO.getStatus()),
                 new Price(orderPO.getTotalAmount(), orderPO.getCurrency()),
+                actualAmount,
+                orderPO.getPaymentNo(),
                 orderPO.getCreateTime(),
                 orderPO.getUpdateTime(),
                 null, // expireTime，从PO中无法获取

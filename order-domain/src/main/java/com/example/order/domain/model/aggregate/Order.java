@@ -109,7 +109,7 @@ public class Order implements Serializable {
      * 此方法用于从数据库加载订单数据时重建订单对象，跳过业务规则验证
      */
     public static Order reconstruct(Id id, Id userId, String orderNo, OrderStatus status,
-                                   Price totalAmount, LocalDateTime createTime, LocalDateTime updateTime,
+                                   Price totalAmount, Price actualAmount, String paymentNo, LocalDateTime createTime, LocalDateTime updateTime,
                                    LocalDateTime expireTime, Integer version, List<OrderItem> orderItems, Address shippingAddress) {
         // 复制订单项列表，避免外部修改
         List<OrderItem> copiedItems = new ArrayList<>(orderItems.size());
@@ -136,6 +136,8 @@ public class Order implements Serializable {
         order.id = id;
         order.status = status;
         order.totalAmount = totalAmount;
+        order.actualAmount = actualAmount;
+        order.paymentNo = paymentNo;
         order.updateTime = updateTime;
         order.expireTime = expireTime;
         order.version = version;
@@ -540,6 +542,7 @@ public class Order implements Serializable {
                 ", status=" + status +
                 ", totalAmount=" + totalAmount +
                 ", actualAmount=" + actualAmount +
+                ", paymentNo='" + paymentNo + '\'' +
                 ", createTime=" + createTime +
                 ", updateTime=" + updateTime +
                 ", expireTime=" + expireTime +

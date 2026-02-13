@@ -24,6 +24,12 @@ public class OrderPO {
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
+    @Column(name = "actual_amount", nullable = true)
+    private Long actualAmount;
+
+    @Column(name = "payment_no", length = 64, nullable = true)
+    private String paymentNo;
+
     @Column(name = "total_amount", nullable = false)
     private Long totalAmount;
 
@@ -78,6 +84,22 @@ public class OrderPO {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Long getActualAmount() {
+        return actualAmount;
+    }
+
+    public void setActualAmount(Long actualAmount) {
+        this.actualAmount = actualAmount;
+    }
+
+    public String getPaymentNo() {
+        return paymentNo;
+    }
+
+    public void setPaymentNo(String paymentNo) {
+        this.paymentNo = paymentNo;
     }
 
     public Long getTotalAmount() {
@@ -158,6 +180,8 @@ public class OrderPO {
                 ", userId=" + userId +
                 ", orderNo='" + orderNo + '\'' +
                 ", status='" + status + '\'' +
+                ", actualAmount=" + actualAmount +
+                ", paymentNo='" + paymentNo + '\'' +
                 ", totalAmount=" + totalAmount +
                 ", currency='" + currency + '\'' +
                 ", createTime=" + createTime +
