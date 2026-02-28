@@ -1,5 +1,18 @@
 package com.example.order.infrastructure.repository.impl;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.order.domain.model.aggregate.Order;
 import com.example.order.domain.model.event.DomainEventPublisher;
 import com.example.order.domain.model.vo.Id;
@@ -9,13 +22,6 @@ import com.example.order.domain.repository.OrderRepository;
 import com.example.order.infrastructure.assember.OrderAssembler;
 import com.example.order.infrastructure.persistence.po.OrderPO;
 import com.example.order.infrastructure.persistence.repository.JpaOrderRepository;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Repository;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * 订单仓储实现
@@ -26,14 +32,17 @@ public class OrderRepositoryImpl implements OrderRepository {
     private final JpaOrderRepository jpaOrderRepository;
     private final OrderAssembler orderAssembler;
     private final DomainEventPublisher domainEventPublisher;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    public OrderRepositoryImpl(JpaOrderRepository jpaOrderRepository, OrderAssembler orderAssembler, DomainEventPublisher domainEventPublisher) {
+    public OrderRepositoryImpl(JpaOrderRepository jpaOrderRepository, OrderAssembler orderAssembler, DomainEventPublisher domainEventPublisher, RedisTemplate<String, Object> redisTemplate) {
         this.jpaOrderRepository = jpaOrderRepository;
         this.orderAssembler = orderAssembler;
         this.domainEventPublisher = domainEventPublisher;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
+    @CachePut(value = "order", key = "#result.id.value")
     public Order save(Order order) {
         OrderPO orderPO = orderAssembler.toOrderPO(order);
         OrderPO savedPO = jpaOrderRepository.save(orderPO);
@@ -47,12 +56,14 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
+    @Cacheable(value = "order", key = "#orderNo")
     public Optional<Order> findByUserIdAndOrderNo(Id userId, String orderNo) {
         return jpaOrderRepository.findByUserIdAndOrderNo(userId.getValue(), orderNo)
                 .map(orderAssembler::toOrder);
     }
 
     @Override
+    @Cacheable(value = "order", key = "#orderId.value")
     public Optional<Order> findByUserIdAndId(Id userId, Id orderId) {
         if (userId == null) {
             // 管理员操作，直接根据订单ID查询
@@ -67,26 +78,21 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     @Override
     public List<Order> findByUserId(Id userId) {
-        return jpaOrderRepository.findByUserId(userId.getValue()).stream()
-                .map(orderAssembler::toOrder)
-                .collect(Collectors.toList());
+        return orderAssembler.batchToOrder(jpaOrderRepository.findByUserId(userId.getValue()));
     }
 
     @Override
     public List<Order> findByUserIdAndStatus(Id userId, OrderStatus status) {
-        return jpaOrderRepository.findByUserIdAndStatus(userId.getValue(), status.name()).stream()
-                .map(orderAssembler::toOrder)
-                .collect(Collectors.toList());
+        return orderAssembler.batchToOrder(jpaOrderRepository.findByUserIdAndStatus(userId.getValue(), status.name()));
     }
 
     @Override
     public List<Order> findExpiredOrders(OrderStatus status, LocalDateTime expireTime) {
-        return jpaOrderRepository.findByStatusAndUpdateTimeBefore(status.name(), expireTime).stream()
-                .map(orderAssembler::toOrder)
-                .collect(Collectors.toList());
+        return orderAssembler.batchToOrder(jpaOrderRepository.findByStatusAndUpdateTimeBefore(status.name(), expireTime));
     }
 
     @Override
+    @CacheEvict(value = "order", key = "#orderId.value")
     public void deleteById(Id orderId) {
         jpaOrderRepository.deleteById(orderId.getValue());
     }
@@ -131,16 +137,12 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     @Override
     public List<Order> findByOrderNoStartingWith(String prefix) {
-        return jpaOrderRepository.findByOrderNoStartingWith(prefix).stream()
-                .map(orderAssembler::toOrder)
-                .collect(Collectors.toList());
+        return orderAssembler.batchToOrder(jpaOrderRepository.findByOrderNoStartingWith(prefix));
     }
 
     @Override
     public List<Order> findByCreateTimeBetween(LocalDateTime startTime, LocalDateTime endTime) {
-        return jpaOrderRepository.findByCreateTimeBetween(startTime, endTime).stream()
-                .map(orderAssembler::toOrder)
-                .collect(Collectors.toList());
+        return orderAssembler.batchToOrder(jpaOrderRepository.findByCreateTimeBetween(startTime, endTime));
     }
 
     @Override
@@ -160,5 +162,25 @@ public class OrderRepositoryImpl implements OrderRepository {
                 jpaPage.getSize(),
                 jpaPage.getTotalElements()
         );
+    }
+
+    @Override
+    @Transactional
+    public int batchUpdateStatus(List<Id> orderIds, OrderStatus newStatus, LocalDateTime updateTime) {
+        // 将Id对象列表转换为Long列表
+        List<Long> orderIdValues = orderIds.stream()
+                .map(Id::getValue)
+                .collect(Collectors.toList());
+
+        // 调用JPA方法批量更新状态
+        int result = jpaOrderRepository.batchUpdateStatus(orderIdValues, newStatus.name(), updateTime);
+        
+        // 手动清除缓存
+        for (Id orderId : orderIds) {
+            String cacheKey = "ORDER_order::" + orderId.getValue();
+            redisTemplate.delete(cacheKey);
+        }
+        
+        return result;
     }
 }

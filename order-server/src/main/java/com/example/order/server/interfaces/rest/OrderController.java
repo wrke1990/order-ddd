@@ -9,8 +9,8 @@ import com.example.order.server.application.service.OrderQueryService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Min;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 
 /**
  * 订单REST控制器

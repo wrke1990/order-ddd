@@ -1,13 +1,13 @@
 package com.example.order.domain.repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import com.example.order.domain.model.aggregate.Order;
 import com.example.order.domain.model.vo.Id;
 import com.example.order.domain.model.vo.OrderStatus;
 import com.example.order.domain.model.vo.Page;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * 订单仓储接口
@@ -73,4 +73,9 @@ public interface OrderRepository {
      * 根据创建时间范围和用户ID查询订单（分页）
      */
     Page<Order> findByUserIdAndCreateTimeBetween(Id userId, LocalDateTime startTime, LocalDateTime endTime, int pageNum, int pageSize);
+
+    /**
+     * 批量更新订单状态
+     */
+    int batchUpdateStatus(List<Id> orderIds, OrderStatus newStatus, LocalDateTime updateTime);
 }

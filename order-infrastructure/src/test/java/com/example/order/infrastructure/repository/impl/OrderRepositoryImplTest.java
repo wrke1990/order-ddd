@@ -5,6 +5,7 @@ import com.example.order.domain.model.entity.OrderItem;
 import com.example.order.domain.model.event.DomainEventPublisher;
 import com.example.order.domain.model.vo.Address;
 import com.example.order.domain.model.vo.Id;
+import com.example.order.domain.model.vo.OrderStatus;
 import com.example.order.domain.model.vo.PaymentMethod;
 import com.example.order.domain.model.vo.Price;
 import com.example.order.infrastructure.assember.OrderAssembler;
@@ -19,6 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -84,7 +86,7 @@ public class OrderRepositoryImplTest {
     public void testFindByUserIdAndId() {
         // 设置mock行为
         lenient().when(jpaOrderRepository.findByUserIdAndId(1L, 1L)).thenReturn(Optional.of(testOrderPO));
-        
+
         // 调用findByUserIdAndId方法
         Optional<Order> orderOptional = orderRepository.findByUserIdAndId(Id.of(1L), Id.of(1L));
 
@@ -101,7 +103,7 @@ public class OrderRepositoryImplTest {
     public void testFindByUserIdAndOrderNo() {
         // 设置mock行为
         lenient().when(jpaOrderRepository.findByUserIdAndOrderNo(1L, "ORDER-001")).thenReturn(Optional.of(testOrderPO));
-        
+
         // 调用findByUserIdAndOrderNo方法
         Optional<Order> orderOptional = orderRepository.findByUserIdAndOrderNo(Id.of(1L), "ORDER-001");
 
@@ -184,5 +186,29 @@ public class OrderRepositoryImplTest {
         orderPO.setOrderItems(orderItemPOs);
 
         return orderPO;
+    }
+
+    @Test
+    public void testBatchUpdateStatus() {
+        // 准备测试数据
+        List<Id> orderIds = new ArrayList<>();
+        orderIds.add(Id.of(1L));
+        orderIds.add(Id.of(2L));
+        orderIds.add(Id.of(3L));
+
+        OrderStatus newStatus = OrderStatus.CANCELLED;
+        LocalDateTime updateTime = LocalDateTime.now();
+
+        // 设置mock行为
+        lenient().when(jpaOrderRepository.batchUpdateStatus(anyList(), anyString(), any(LocalDateTime.class))).thenReturn(3);
+
+        // 调用batchUpdateStatus方法
+        int updatedCount = orderRepository.batchUpdateStatus(orderIds, newStatus, updateTime);
+
+        // 验证结果
+        Assertions.assertEquals(3, updatedCount);
+
+        // 验证mock调用
+        verify(jpaOrderRepository, times(1)).batchUpdateStatus(anyList(), eq("CANCELLED"), any(LocalDateTime.class));
     }
 }

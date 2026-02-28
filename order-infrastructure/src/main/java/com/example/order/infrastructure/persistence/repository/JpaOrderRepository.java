@@ -1,14 +1,17 @@
 package com.example.order.infrastructure.persistence.repository;
 
-import com.example.order.infrastructure.persistence.po.OrderPO;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import com.example.order.infrastructure.persistence.po.OrderPO;
 
 /**
  * Spring Data JPA订单仓库接口
@@ -70,4 +73,11 @@ public interface JpaOrderRepository extends JpaRepository<OrderPO, Long> {
      * 根据用户ID和创建时间范围分页查询订单
      */
     Page<OrderPO> findByUserIdAndCreateTimeBetween(Long userId, LocalDateTime startTime, LocalDateTime endTime, Pageable pageable);
+
+    /**
+     * 批量更新订单状态
+     */
+    @Modifying
+    @Query("UPDATE OrderPO o SET o.status = :status, o.updateTime = :updateTime WHERE o.id IN :orderIds")
+    int batchUpdateStatus(List<Long> orderIds, String status, LocalDateTime updateTime);
 }

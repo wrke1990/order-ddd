@@ -1,6 +1,6 @@
 package com.example.order.infrastructure.persistence.po;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 /**
  * 购物车项持久化对象

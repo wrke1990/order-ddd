@@ -1,5 +1,11 @@
 package com.example.order.infrastructure.assember;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Component;
+
 import com.example.order.domain.model.aggregate.Order;
 import com.example.order.domain.model.entity.OrderItem;
 import com.example.order.domain.model.vo.Address;
@@ -9,11 +15,6 @@ import com.example.order.domain.model.vo.Price;
 import com.example.order.infrastructure.persistence.po.AddressPO;
 import com.example.order.infrastructure.persistence.po.OrderItemPO;
 import com.example.order.infrastructure.persistence.po.OrderPO;
-import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 订单对象映射器
@@ -39,6 +40,7 @@ public class OrderAssembler {
         orderPO.setCreateTime(order.getCreateTime());
         orderPO.setUpdateTime(order.getUpdateTime());
         orderPO.setVersion(order.getVersion());
+        
 
         // 设置实际支付金额
         if (order.getActualAmount() != null) {
@@ -203,5 +205,35 @@ public class OrderAssembler {
                 addressPO.getDetailAddress(),
                 addressPO.getPostalCode()
         );
+    }
+
+    /**
+     * 批量将Order领域对象转PO
+     */
+    public List<OrderPO> batchToOrderPO(List<Order> orders) {
+        if (orders == null || orders.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<OrderPO> orderPOs = new ArrayList<>(orders.size());
+        for (Order order : orders) {
+            orderPOs.add(toOrderPO(order));
+        }
+        return orderPOs;
+    }
+
+    /**
+     * 批量将OrderPO转领域对象
+     */
+    public List<Order> batchToOrder(List<OrderPO> orderPOs) {
+        if (orderPOs == null || orderPOs.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<Order> orders = new ArrayList<>(orderPOs.size());
+        for (OrderPO orderPO : orderPOs) {
+            orders.add(toOrder(orderPO));
+        }
+        return orders;
     }
 }

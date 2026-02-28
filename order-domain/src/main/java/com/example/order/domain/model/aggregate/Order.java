@@ -6,6 +6,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.example.order.common.exception.order.OrderCreationException;
+import com.example.order.common.exception.order.OrderException;
+import com.example.order.common.exception.order.OrderPaymentException;
+import com.example.order.common.exception.order.OrderStatusException;
 import com.example.order.domain.model.entity.OrderItem;
 import com.example.order.domain.model.event.DomainEvent;
 import com.example.order.domain.model.event.OrderAddressUpdatedEvent;
@@ -68,10 +72,10 @@ public class Order implements Serializable {
         OrderBusinessRuleValidator.validateOrderCreation(userId, orderItems);
 
         if (shippingAddress == null) {
-            throw new IllegalArgumentException("收货地址不能为空");
+            throw new OrderCreationException("收货地址不能为空");
         }
         if (paymentMethod == null) {
-            throw new IllegalArgumentException("支付方式不能为空");
+            throw new OrderCreationException("支付方式不能为空");
         }
 
         // 复制订单项列表，避免外部修改
@@ -188,7 +192,7 @@ public class Order implements Serializable {
         OrderBusinessRuleValidator.validateOrderPayment(this);
 
         if (paymentNo == null || paymentNo.isEmpty()) {
-            throw new IllegalArgumentException("支付单号不能为空");
+            throw new OrderPaymentException("支付单号不能为空");
         }
 
         this.status = OrderStatus.PAID;
@@ -204,10 +208,10 @@ public class Order implements Serializable {
      */
     public void changePaymentMethod(PaymentMethod newPaymentMethod) {
         if (this.status != OrderStatus.PENDING_PAYMENT) {
-            throw new IllegalArgumentException("只有待支付状态的订单可以修改支付方式");
+            throw new OrderStatusException("只有待支付状态的订单可以修改支付方式");
         }
         if (newPaymentMethod == null) {
-            throw new IllegalArgumentException("新支付方式不能为空");
+            throw new OrderStatusException("新支付方式不能为空");
         }
 
         this.paymentMethod = newPaymentMethod;
@@ -221,10 +225,10 @@ public class Order implements Serializable {
      */
     public void changeShippingAddress(Address newAddress) {
         if (this.status != OrderStatus.PENDING_PAYMENT && this.status != OrderStatus.PAID && this.status != OrderStatus.PENDING_SHIPMENT) {
-            throw new IllegalArgumentException("只有待支付、已支付或待发货状态的订单可以修改地址");
+            throw new OrderStatusException("只有待支付、已支付或待发货状态的订单可以修改地址");
         }
         if (newAddress == null) {
-            throw new IllegalArgumentException("新地址不能为空");
+            throw new OrderStatusException("新地址不能为空");
         }
 
         Address oldAddress = this.shippingAddress;
@@ -238,7 +242,7 @@ public class Order implements Serializable {
      */
     public void confirmReceipt() {
         if (this.status != OrderStatus.SHIPPED && this.status != OrderStatus.PENDING_RECEIPT) {
-            throw new IllegalArgumentException("只有已发货或待收货状态的订单可以确认收货");
+            throw new OrderStatusException("只有已发货或待收货状态的订单可以确认收货");
         }
 
         this.status = OrderStatus.COMPLETED;
@@ -270,11 +274,11 @@ public class Order implements Serializable {
      */
     public void ship(String logisticsCompany, String trackingNumber) {
         if (this.status != OrderStatus.PAID && this.status != OrderStatus.PENDING_SHIPMENT) {
-            throw new IllegalArgumentException("只有已支付或待发货状态的订单可以发货");
+            throw new OrderStatusException("只有已支付或待发货状态的订单可以发货");
         }
         if (logisticsCompany == null || logisticsCompany.isEmpty() ||
             trackingNumber == null || trackingNumber.isEmpty()) {
-            throw new IllegalArgumentException("物流信息不能为空");
+            throw new OrderStatusException("物流信息不能为空");
         }
 
         this.status = OrderStatus.SHIPPED;
@@ -288,10 +292,10 @@ public class Order implements Serializable {
      */
     public void updateLogistics(LocalDateTime time, String location, String description) {
         if (this.status != OrderStatus.SHIPPED && this.status != OrderStatus.PENDING_RECEIPT) {
-            throw new IllegalArgumentException("只有已发货或待收货状态的订单可以更新物流信息");
+            throw new OrderStatusException("只有已发货或待收货状态的订单可以更新物流信息");
         }
         if (this.logisticsInfo == null) {
-            throw new IllegalStateException("订单尚未发货，无法更新物流轨迹");
+            throw new OrderStatusException("订单尚未发货，无法更新物流轨迹");
         }
 
         this.logisticsInfo.addTrack(time, location, description);
@@ -342,7 +346,7 @@ public class Order implements Serializable {
      */
     public void complete() {
         if (this.status != OrderStatus.SHIPPED && this.status != OrderStatus.PENDING_RECEIPT) {
-            throw new IllegalArgumentException("只有已发货或待收货状态的订单可以完成");
+            throw new OrderStatusException("只有已发货或待收货状态的订单可以完成");
         }
 
         this.status = OrderStatus.COMPLETED;
@@ -350,57 +354,65 @@ public class Order implements Serializable {
     }
 
     /**
+     * 获取订单ID（如果存在）
+     */
+    private Long getOrderId() {
+        return this.id != null ? this.id.getValue() : null;
+    }
+
+    /**
+     * 添加领域事件
+     */
+    private void addDomainEvent(DomainEvent event) {
+        this.domainEvents.add(event);
+    }
+
+    /**
      * 创建订单创建事件
      */
     private void createOrderEvent() {
-        Long orderId = this.id != null ? this.id.getValue() : null;
-        OrderCreatedEvent event = new OrderCreatedEvent(orderId, this.orderNo, this.userId.getValue(), this.orderItems);
-        this.domainEvents.add(event);
+        OrderCreatedEvent event = new OrderCreatedEvent(getOrderId(), this.orderNo, this.userId.getValue(), this.orderItems);
+        addDomainEvent(event);
     }
 
     /**
      * 创建订单支付事件
      */
     private void createOrderPaidEvent() {
-        Long orderId = this.id != null ? this.id.getValue() : null;
-        OrderPaidEvent event = new OrderPaidEvent(orderId, this.orderNo, this.totalAmount);
-        this.domainEvents.add(event);
+        OrderPaidEvent event = new OrderPaidEvent(getOrderId(), this.orderNo, this.totalAmount);
+        addDomainEvent(event);
     }
 
     /**
      * 创建订单取消事件
      */
     private void createOrderCancelledEvent(String reason) {
-        Long orderId = this.id != null ? this.id.getValue() : null;
-        OrderCancelledEvent event = new OrderCancelledEvent(orderId, this.orderNo, this.userId.getValue(), reason);
-        this.domainEvents.add(event);
+        OrderCancelledEvent event = new OrderCancelledEvent(getOrderId(), this.orderNo, this.userId.getValue(), reason);
+        addDomainEvent(event);
     }
 
     /**
      * 创建订单发货事件
      */
     private void createOrderShippedEvent(String logisticsCompany, String trackingNumber) {
-        Long orderId = this.id != null ? this.id.getValue() : null;
-        OrderShippedEvent event = new OrderShippedEvent(orderId, this.orderNo, this.userId.getValue(), logisticsCompany, trackingNumber);
-        this.domainEvents.add(event);
+        OrderShippedEvent event = new OrderShippedEvent(getOrderId(), this.orderNo, this.userId.getValue(), logisticsCompany, trackingNumber);
+        addDomainEvent(event);
     }
 
     /**
      * 创建订单确认收货事件
      */
     private void createOrderReceivedEvent() {
-        Long orderId = this.id != null ? this.id.getValue() : null;
-        OrderReceivedEvent event = new OrderReceivedEvent(orderId, this.orderNo, this.userId.getValue());
-        this.domainEvents.add(event);
+        OrderReceivedEvent event = new OrderReceivedEvent(getOrderId(), this.orderNo, this.userId.getValue());
+        addDomainEvent(event);
     }
 
     /**
      * 创建订单地址修改事件
      */
     private void createOrderAddressUpdatedEvent(Address oldAddress, Address newAddress) {
-        Long orderId = this.id != null ? this.id.getValue() : null;
-        OrderAddressUpdatedEvent event = new OrderAddressUpdatedEvent(orderId, this.orderNo, oldAddress, newAddress);
-        this.domainEvents.add(event);
+        OrderAddressUpdatedEvent event = new OrderAddressUpdatedEvent(getOrderId(), this.orderNo, oldAddress, newAddress);
+        addDomainEvent(event);
     }
 
     // 仅提供必要的getter方法，避免过度暴露内部状态
@@ -410,7 +422,7 @@ public class Order implements Serializable {
 
     public void setId(Id id) {
         if (id == null) {
-            throw new IllegalArgumentException("订单ID不能为空");
+            throw new OrderException("订单ID不能为空");
         }
         this.id = id;
     }
@@ -425,7 +437,7 @@ public class Order implements Serializable {
 
     public void setOrderNo(String orderNo) {
         if (orderNo == null || orderNo.isEmpty()) {
-            throw new IllegalArgumentException("订单号不能为空");
+            throw new OrderException("订单号不能为空");
         }
         this.orderNo = orderNo;
         // 同步订单号到所有订单项
@@ -444,7 +456,7 @@ public class Order implements Serializable {
      */
     public void setStatus(OrderStatus status) {
         if (status == null) {
-            throw new IllegalArgumentException("订单状态不能为空");
+            throw new OrderException("订单状态不能为空");
         }
         this.status = status;
         this.updateTime = LocalDateTime.now();

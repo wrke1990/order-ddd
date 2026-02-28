@@ -29,17 +29,18 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
 
   # Redis配置
-  redis:
-    host: localhost
-    port: 6379
-    database: 0
-    timeout: 10000ms
-    jedis:
-      pool:
-        max-active: 100
-        max-wait: -1ms
-        max-idle: 10
-        min-idle: 0
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 10000ms
+      jedis:
+        pool:
+          max-active: 100
+          max-wait: -1ms
+          max-idle: 10
+          min-idle: 0
 
   # 缓存配置
   cache:
@@ -50,6 +51,19 @@ spring:
       cache-null-values: false # 不缓存null值
       use-key-prefix: true
 
+  # RabbitMQ配置
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    listener:
+      simple:
+        concurrency: 1
+        max-concurrency: 10
+        prefetch: 10
+
 # 日志配置
 logging:
   level:
@@ -57,3 +71,17 @@ logging:
     org.springframework: info
     org.hibernate: info
     org.springframework.data.redis: info
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,metrics,prometheus"
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: ${spring.profiles.active:default}
